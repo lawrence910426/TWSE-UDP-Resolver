@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \       
     cmake \                 
     python3 \              
-    python3-pip && \        
+    python3-pip \
+    netcat && \        
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -23,6 +24,3 @@ COPY ./test ./test
 
 # Create a build directory and build the C++ project
 RUN mkdir build && cd build && cmake .. && cmake --build .
-
-# Set the default command to run the built C++ executable
-CMD ["./build/main"]

@@ -8,8 +8,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Add the executable (update the source files as needed)
+# Create a library for parser
+add_library(parser OBJECT src/parser.cc)
+
+# Include directories for the parser library
+target_include_directories(parser PRIVATE include)
+
+# Add the main executable and link it with parser.o
 add_executable(${PROJECT_NAME} src/main.cpp)
 
-# Include directories (if you have header files in "include/")
+# Include directories for the main executable
 target_include_directories(${PROJECT_NAME} PRIVATE include)
+
+# Link the main executable with the parser library object
+target_link_libraries(${PROJECT_NAME} PRIVATE parser pthread)
