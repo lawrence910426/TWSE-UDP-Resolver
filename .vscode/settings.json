@@ -1,0 +1,11 @@
+{
+    "cmake.generator": "Ninja", // Or "Unix Makefiles" if Ninja isn't installed
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.configureOnOpen": true,
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.defaultBuildType": "Debug", // Use "Release" for optimized builds
+    "files.associations": {
+        "*.tpp": "cpp",
+        "iostream": "cpp"
+    }
+}
