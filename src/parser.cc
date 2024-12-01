@@ -132,7 +132,7 @@ bool Parser::parse_body(const std::vector<uint8_t>& raw_packet, Packet& packet, 
     }
 
     packet.display_item = raw_packet[offset++];
-    packet.unusual_event = raw_packet[offset++];
+    packet.limit_up_limit_down = raw_packet[offset++];
     packet.status_note = raw_packet[offset++];
     packet.cumulative_volume = (raw_packet[offset] << 24) |
                                 (raw_packet[offset + 1] << 16) |
@@ -142,10 +142,12 @@ bool Parser::parse_body(const std::vector<uint8_t>& raw_packet, Packet& packet, 
 
     // Parse dynamic prices and quantities (if present)
     while (offset + 9 <= raw_packet.size() - TERMINAL_CODE_SIZE - 1) {
-        uint32_t price = (raw_packet[offset] << 24) |
-                         (raw_packet[offset + 1] << 16) |
-                         (raw_packet[offset + 2] << 8) |
-                         raw_packet[offset + 3];
+        // Warning: It is reasonable to discard the first byte since the stock price is likely 
+        // not to exceed 9,999.
+        uint32_t price = (raw_packet[offset + 1] << 24) |
+                         (raw_packet[offset + 2] << 16) |
+                         (raw_packet[offset + 3] << 8) |
+                         raw_packet[offset + 4];
         packet.prices.push_back(price);
         offset += 5;
 

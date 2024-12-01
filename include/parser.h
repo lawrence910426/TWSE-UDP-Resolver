@@ -30,7 +30,7 @@ struct Packet {
     char stock_code[6];           // 6 bytes, ASCII
     uint64_t match_time;          // 6 bytes, PACK BCD
     uint8_t display_item;         // 1 byte, BIT MAP
-    uint8_t unusual_event;        // 1 byte, BIT MAP
+    uint8_t limit_up_limit_down;        // 1 byte, BIT MAP
     uint8_t status_note;          // 1 byte, BIT MAP
     uint32_t cumulative_volume;   // 4 bytes, PACK BCD
     std::vector<uint32_t> prices; // Prices (each 5 bytes, PACK BCD)
