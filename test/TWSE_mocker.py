@@ -8,86 +8,94 @@ def calculate_checksum(data):
         checksum ^= byte
     return checksum
 
-def create_udp_packet():
+def create_packet_1():
     # ESC-CODE (ASCII 27)
     esc_code = bytes([0x1B])
 
     # HEADER
-    message_length = bytes([0x01, 0x13])  # 113 Bytes
-    business_type = bytes([0x01])         # "01" for 集中市場普通股競價交易
-    format_code = bytes([0x06])           # Format code "06"
-    format_version = bytes([0x04])        # Format version "04"
-    transmission_number = bytes([0x00, 0x00, 0x45, 0x67])  # Example sequence 4567
-
-    header = message_length + business_type + format_code + format_version + transmission_number
+    header = bytes([0x01, 0x13, 0x01, 0x06, 0x04, 0x00, 0x00, 0x45, 0x67])
 
     # BODY
-    stock_code = b'\x32\x33\x33\x30\x20\x20'  # Stock code: "2330  "
-    match_time = b'\x09\x04\x15\x06\x12\x78'  # Match time: 9:04:15:61.278
-    display_item = bytes([0xD6])              # Display item bitmap
-    unusual = bytes([0x00])                   # Unusual indicator
-    status_note = bytes([0x00])               # Status indicator
-    cumulative_trading_volume = bytes([0x00, 0x01, 0x64, 0x23])  # Volume: 16423
-    current_price = b'\x00\x00\x99\x50\x00'   # Price: 99.5000
-    current_quantity = b'\x00\x00\x12\x34'    # Quantity: 1234
-
-    # Buy/Sell Prices and Quantities
-    buy_prices = [
-        b'\x00\x00\x99\x50\x00',  # Price 1: 99.5000
-        b'\x00\x00\x99\x00\x00',  # Price 2: 99.0000
-        b'\x00\x00\x98\x50\x00',  # Price 3: 98.5000
-        b'\x00\x00\x97\x50\x00',  # Price 4: 97.5000
-        b'\x00\x00\x97\x00\x00'   # Price 5: 97.0000
-    ]
-    buy_quantities = [
-        b'\x00\x00\x02\x50',  # Quantity 1: 250
-        b'\x00\x00\x01\x75',  # Quantity 2: 175
-        b'\x00\x00\x04\x77',  # Quantity 3: 477
-        b'\x00\x00\x06\x69',  # Quantity 4: 669
-        b'\x00\x00\x01\x25'   # Quantity 5: 125
-    ]
-    sell_prices = [
-        b'\x00\x01\x00\x00\x00',  # Price 1: 100.0000
-        b'\x00\x01\x00\x50\x00',  # Price 2: 100.5000
-        b'\x00\x01\x01\x50\x00'   # Price 3: 101.5000
-    ]
-    sell_quantities = [
-        b'\x00\x00\x00\x80',  # Quantity 1: 80
-        b'\x00\x00\x06\x75',  # Quantity 2: 675
-        b'\x00\x00\x04\x60'   # Quantity 3: 460
-    ]
-
     body = (
-        stock_code + match_time + display_item + unusual +
-        status_note + cumulative_trading_volume + current_price +
-        current_quantity
+        b'\x32\x33\x33\x30\x20\x20'  # Stock code: "2330  "
+        b'\x09\x04\x15\x06\x12\x78'  # Match time: 9:04:15.61.278
+        b'\xD6'                      # Display item bitmap
+        b'\x00'                      # Unusual indicator
+        b'\x00'                      # Status indicator
+        b'\x00\x01\x64\x23'          # Cumulative trading volume: 16423
+        b'\x00\x00\x99\x50\x00'      # Current price: 99.5000
+        b'\x00\x00\x12\x34'          # Current quantity: 1234
+        # Buy Prices and Quantities
+        b'\x00\x00\x99\x50\x00\x00\x00\x02\x50'
+        b'\x00\x00\x99\x00\x00\x00\x00\x01\x75'
+        b'\x00\x00\x98\x50\x00\x00\x00\x04\x77'
+        b'\x00\x00\x97\x50\x00\x00\x00\x06\x69'
+        b'\x00\x00\x97\x00\x00\x00\x00\x01\x25'
+        # Sell Prices and Quantities
+        b'\x00\x01\x00\x00\x00\x00\x00\x00\x80'
+        b'\x00\x01\x00\x50\x00\x00\x00\x06\x75'
+        b'\x00\x01\x01\x50\x00\x00\x00\x04\x60'
     )
 
-    # Add Buy/Sell Prices and Quantities
-    for i in range(5):
-        body += buy_prices[i] + buy_quantities[i]
-    for i in range(3):
-        body += sell_prices[i] + sell_quantities[i]
-
-    # CHECKSUM
-    checksum_data = esc_code + header + body
-    checksum = calculate_checksum(checksum_data)
-    checksum = bytes([checksum])
+    # Calculate checksum
+    checksum = bytes([calculate_checksum(esc_code + header + body)])
 
     # TERMINAL-CODE
-    terminal_code = b'\x0D\x0A'  # Hex: 0D 0A
+    terminal_code = b'\x0D\x0A'
 
-    # Combine all components
-    udp_packet = esc_code + header + body + checksum + terminal_code
+    return esc_code + header + body + checksum + terminal_code
 
-    return udp_packet
+def create_packet_2():
+    esc_code = bytes([0x1B])
+    header = bytes([0x00, 0x86, 0x01, 0x06, 0x04, 0x00, 0x06, 0x43, 0x23])
+    body = (
+        b'\x32\x30\x30\x32\x20\x20'  # Stock code: "2002  "
+        b'\x10\x27\x33\x16\x50\x41'  # Match time: 10:27:33.165.041
+        b'\xD0'                      # Display item bitmap
+        b'\xA0'                      # Unusual indicator
+        b'\x00'                      # Status indicator
+        b'\x00\x01\x19\x21'          # Cumulative trading volume: 11921
+        b'\x00\x00\x13\x85\x00'      # Current price: 13.8500
+        b'\x00\x00\x19\x21'          # Current quantity: 1921
+        # Buy Prices and Quantities
+        b'\x00\x00\x13\x85\x00\x00\x00\x05\x40'
+        b'\x00\x00\x13\x80\x00\x00\x00\x02\x30'
+        b'\x00\x00\x13\x75\x00\x00\x00\x00\x72'
+        b'\x00\x00\x13\x70\x00\x00\x00\x00\x69'
+        b'\x00\x00\x13\x65\x00\x00\x00\x00\x81'
+    )
+    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    terminal_code = b'\x0D\x0A'
 
+    return esc_code + header + body + checksum + terminal_code
+
+def create_packet_3():
+    esc_code = bytes([0x1B])
+    header = bytes([0x00, 0x86, 0x01, 0x06, 0x04, 0x00, 0x04, 0x12, 0x34])
+    body = (
+        b'\x31\x35\x30\x34\x20\x20'  # Stock code: "1504  "
+        b'\x09\x50\x23\x27\x15\x34'  # Match time: 9:50:23.271.534
+        b'\x8A'                      # Display item bitmap
+        b'\x44'                      # Unusual indicator
+        b'\x00'                      # Status indicator
+        b'\x00\x00\x06\x50'          # Cumulative trading volume: 650
+        b'\x00\x00\x11\x50\x00'      # Current price: 11.5000
+        b'\x00\x00\x00\x17'          # Current quantity: 17
+        # Sell Prices and Quantities
+        b'\x00\x00\x11\x50\x00\x00\x00\x00\x70'
+        b'\x00\x00\x11\x55\x00\x00\x00\x00\x35'
+        b'\x00\x00\x11\x60\x00\x00\x00\x00\x46'
+        b'\x00\x00\x11\x65\x00\x00\x00\x00\x28'
+        b'\x00\x00\x11\x70\x00\x00\x00\x00\x19'
+    )
+    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    terminal_code = b'\x0D\x0A'
+
+    return esc_code + header + body + checksum + terminal_code
 
 def send_udp_packet(packet, ip, port):
-    # Create a UDP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # Send the packet
         sock.sendto(packet, (ip, port))
         print("Packet sent successfully!", flush=True)
     except Exception as e:
@@ -95,19 +103,15 @@ def send_udp_packet(packet, ip, port):
     finally:
         sock.close()
 
-
 if __name__ == "__main__":
-    # Target IP and Port
     target_ip = "127.0.0.1"
     target_port = 12345
 
-    # Create and send the UDP packet
-    while True:
-        packet = create_udp_packet()
-        print("Sending the UDP packet that contains real information", flush=True)
-        send_udp_packet(packet, target_ip, target_port)
-        time.sleep(1)
+    packets = [create_packet_1(), create_packet_2(), create_packet_3()]
+    packet_index = 0
 
-        print("Sending the UDP packet that contains garbage information", flush=True)
-        send_udp_packet(packet[::-1], target_ip, target_port)
+    while True:
+        print(f"Sending packet {packet_index + 1}", flush=True)
+        send_udp_packet(packets[packet_index], target_ip, target_port)
+        packet_index = (packet_index + 1) % 3  # Round-robin
         time.sleep(1)

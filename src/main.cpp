@@ -72,18 +72,7 @@ void analyze_packet(const Packet& packet) {
 
     // Check if the stock code is 2330 (TSMC)
     std::string stock_code(packet.stock_code, 6);
-    if (stock_code == "2330  ") {
-        std::cout << "Stock code is 2330 (TSMC)" << std::endl;
-    } else {
-        std::cout << "Stock code is not 2330" << std::endl;
-    }
-
-    // Check if cumulative volume is greater than 100 lots (1 lot = 100 shares)
-    if (packet.cumulative_volume > 100 * 100) {
-        std::cout << "Cumulative volume is greater than 100 lots" << std::endl;
-    } else {
-        std::cout << "Cumulative volume is not greater than 100 lots" << std::endl;
-    }
+    std::cout << "Stock code is " << stock_code << std::endl;
 }
 
 // Callback function to handle received packets

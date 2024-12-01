@@ -23,6 +23,3 @@ tmux send-keys -t $SESSION_NAME \
 
 # Attach to the tmux session
 tmux attach-session -t $SESSION_NAME
-
-# Clean up after tmux exits
-docker network rm $NETWORK_NAME
