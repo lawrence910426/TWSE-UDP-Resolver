@@ -1,7 +1,4 @@
 #!/bin/sh
-# Spawn two Dockers, one for the parser and the another one sends example UDP packets to the parser.
-#!/bin/sh
-# Spawn two Dockers, one for the parser and the other for sending example UDP packets.
 
 # Build the Docker image
 cd ..
