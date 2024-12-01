@@ -116,6 +116,9 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
                                  (raw_packet[offset + 7] << 8) |
                                  raw_packet[offset + 8];
     offset += HEADER_LENGTH;
+
+    if (packet.format_code != 0x06) return false;
+    
     return true;
 }
 
