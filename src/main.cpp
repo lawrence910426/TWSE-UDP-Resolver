@@ -111,7 +111,7 @@ void handle_packet(const Packet& packet) {
 
 int main() {
     // Port to listen on
-    const int port = 12345;
+    const int port = 10000;
 
     // Create a parser instance
     Parser parser;
