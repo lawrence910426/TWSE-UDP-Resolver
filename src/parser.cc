@@ -57,11 +57,28 @@ void Parser::receive_loop(int port) {
         return;
     }
 
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr("224.0.100.100");
+    mreq.imr_interface.s_addr = inet_addr("192.168.205.30");
+
+    if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+	        std::cerr << "Failed to join multicast group on interface 192.168.205.30" << std::endl;
+		    close(sockfd);
+		        return;
+    }
+
     while (running) {
         ssize_t len = recv(sockfd, buffer, sizeof(buffer), 0);
+	std::cout << "Packet size: " << len << std::endl;
         if (len > 0) {
             std::vector<uint8_t> raw_packet(buffer, buffer + len);
             parse_packet(raw_packet);
+
+	    if (len < 200) {
+		        for (uint8_t v : raw_packet)
+				        std::cout << std::hex << +v << " ";
+			return;
+	    }
         }
     }
 
