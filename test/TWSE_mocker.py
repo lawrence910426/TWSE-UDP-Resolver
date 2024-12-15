@@ -132,7 +132,7 @@ def send_udp_packet(packet, ip, port):
 
 if __name__ == "__main__":
     target_ip = "127.0.0.1"
-    target_port = 12345
+    target_port = 10000
 
     packets = [
         create_packet_1(), create_packet_2(), create_packet_3(),
