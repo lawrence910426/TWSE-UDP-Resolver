@@ -79,7 +79,7 @@ void analyze_packet(const Packet& packet) {
 void handle_packet(const Packet& packet) {
     // Print basic information from the packet
     std::cout << "Received Packet:" << std::endl;
-    std::cout << "Message Length: " << packet.message_length << std::endl;
+    std::cout << "Message Length: " << std::hex << packet.message_length << std::endl;
     std::cout << "Business Type: " << static_cast<int>(packet.business_type) << std::endl;
     std::cout << "Format Code: " << static_cast<int>(packet.format_code) << std::endl;
     std::cout << "Format Version: " << static_cast<int>(packet.format_version) << std::endl;
