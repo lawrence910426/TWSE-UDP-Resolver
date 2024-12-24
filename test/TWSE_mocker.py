@@ -103,8 +103,6 @@ def create_packet_4():
         b'\x00'                      # Unusual indicator
         b'\x10'                      # Status indicator
         b'\x00\x00\x97\x49'          # Cumulative trading volume: 9749
-        b'\x00\x00\x16\x70\x00'      # Current price: 16.7000
-        b'\x00\x00\x00\x61'          # Current quantity: 61
         # Buy Prices and Quantities
         b'\x00\x00\x16\x70\x00\x00\x00\x00\x61'
         b'\x00\x00\x16\x65\x00\x00\x00\x02\x09'
@@ -165,7 +163,7 @@ if __name__ == "__main__":
     target_port = 10000
 
     packets = [
-        create_packet_1(), create_packet_2(), create_packet_3(),
+        create_packet_1(), create_packet_2(), create_packet_3(), create_packet_4(),
         create_packet_useless_format(), create_packet_invalid()
     ]
     packet_index = 0
