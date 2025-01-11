@@ -101,7 +101,25 @@ void Parser::receive_loop(int port) {
         ssize_t len = recv(sockfd, buffer, sizeof(buffer), 0);
         if (len > 0) {
             std::vector<uint8_t> raw_packet(buffer, buffer + len);
-            parse_packet(raw_packet);
+            
+            // Split packets by 0D 0A delimiter
+            size_t start_pos = 0;
+            for (size_t i = 0; i < raw_packet.size() - 1; i++) {
+                if (raw_packet[i] == 0x0D && raw_packet[i + 1] == 0x0A) {
+                    // Found a complete packet
+                    size_t packet_length = i + 2 - start_pos;  // Including 0D 0A
+                    std::vector<uint8_t> single_packet(raw_packet.begin() + start_pos, 
+                                                     raw_packet.begin() + start_pos + packet_length);
+                    
+                    // Process single packet
+                    if (!single_packet.empty()) {
+                        parse_packet(single_packet);
+                    }
+                    
+                    // Update start position for next packet
+                    start_pos = i + 2;
+                }
+            }
         } else if (len < 0) {
             std::cerr << "Error receiving data: " << strerror(errno) << std::endl;
         }
@@ -120,6 +138,7 @@ void Parser::set_multicast(const std::string& group, const std::string& iface) {
 // Parse the received packet
 void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     if (raw_packet.empty() || raw_packet[0] != ESC_CODE) {
+        std::cout << "Invalid packet" << std::endl;
         return; // Ignore packets that don't start with ESC-CODE
     }
 
@@ -128,26 +147,31 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
 
     // Parse the header
     if (!parse_header(raw_packet, packet, offset)) {
+        std::cout << "Invalid header" << std::endl;
         return; // Ignore invalid packets
     }
 
     // Parse the body
     if (!parse_body(raw_packet, packet, offset)) {
+        std::cout << "Invalid body" << std::endl;
         return; // Ignore invalid packets
     }
 
     // Validate the checksum
     if (!validate_checksum(raw_packet, packet)) {
+        std::cout << "Invalid checksum" << std::endl;
         return; // Ignore invalid packets
     }
 
     // Validate the terminal code
     if (!validate_terminal_code(raw_packet, packet)) {
+        std::cout << "Invalid terminal code" << std::endl;
         return; // Ignore invalid packets
     }
 
     // If all checks pass, invoke the callback
     if (packet_callback) {
+        std::cout << "Received " << raw_packet.size() << " bytes" << std::endl;
         packet_callback(packet);
     }
 }
@@ -222,7 +246,7 @@ bool Parser::validate_checksum(const std::vector<uint8_t>& raw_packet, const Pac
     if (checksum_position >= raw_packet.size()) return false;
 
     uint8_t calculated_checksum = 0;
-    for (size_t i = 0; i < checksum_position; ++i) {
+    for (size_t i = 1; i < checksum_position; ++i) {
         calculated_checksum ^= raw_packet[i];
     }
 
