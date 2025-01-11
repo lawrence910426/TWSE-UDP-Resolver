@@ -93,6 +93,34 @@ def create_packet_3():
 
     return esc_code + header + body + checksum + terminal_code
 
+def create_packet_4():
+    esc_code = bytes([0x1B])
+    header = bytes([0x01, 0x22, 0x01, 0x06, 0x04, 0x08, 0x39, 0x24, 0x73])
+    body = (
+        b'\x36\x37\x37\x30\x20\x20'  # Stock code: "6770  "
+        b'\x13\x08\x58\x99\x37\x12'  # Match time: 13:08:58.993.712
+        b'\x5A'                      # Display item bitmap
+        b'\x00'                      # Unusual indicator
+        b'\x10'                      # Status indicator
+        b'\x00\x00\x97\x49'          # Cumulative trading volume: 9749
+        # Buy Prices and Quantities
+        b'\x00\x00\x16\x70\x00\x00\x00\x00\x61'
+        b'\x00\x00\x16\x65\x00\x00\x00\x02\x09'
+        b'\x00\x00\x16\x60\x00\x00\x00\x06\x30'
+        b'\x00\x00\x16\x55\x00\x00\x00\x11\x36'
+        b'\x00\x00\x16\x50\x00\x00\x00\x12\x02'
+        # Sell Prices and Quantities
+        b'\x00\x00\x16\x75\x00\x00\x00\x01\x70'
+        b'\x00\x00\x16\x80\x00\x00\x00\x01\x18'
+        b'\x00\x00\x16\x85\x00\x00\x00\x01\x58'
+        b'\x00\x00\x16\x90\x00\x00\x00\x04\x78'
+        b'\x00\x00\x16\x95\x00\x00\x00\x02\x15'
+    )
+    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    terminal_code = b'\x0D\x0A'
+
+    return esc_code + header + body + checksum + terminal_code
+
 def create_packet_useless_format():
     esc_code = bytes([0x1B])
     header = bytes([0x00, 0x86, 0x01, 0x07, 0x04, 0x00, 0x04, 0x12, 0x34])
@@ -135,7 +163,7 @@ if __name__ == "__main__":
     target_port = 10000
 
     packets = [
-        create_packet_1(), create_packet_2(), create_packet_3(),
+        create_packet_1(), create_packet_2(), create_packet_3(), create_packet_4(),
         create_packet_useless_format(), create_packet_invalid()
     ]
     packet_index = 0

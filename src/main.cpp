@@ -79,7 +79,7 @@ void analyze_packet(const Packet& packet) {
 void handle_packet(const Packet& packet) {
     // Print basic information from the packet
     std::cout << "Received Packet:" << std::endl;
-    std::cout << "Message Length: " << packet.message_length << std::endl;
+    std::cout << "Message Length: " << std::hex << packet.message_length << std::endl;
     std::cout << "Business Type: " << static_cast<int>(packet.business_type) << std::endl;
     std::cout << "Format Code: " << static_cast<int>(packet.format_code) << std::endl;
     std::cout << "Format Version: " << static_cast<int>(packet.format_version) << std::endl;
@@ -109,12 +109,29 @@ void handle_packet(const Packet& packet) {
     std::cout << "========================" << std::endl;
 }
 
-int main() {
-    // Port to listen on
+int main(int argc, char* argv[]) {
     const int port = 10000;
+    std::string multicast_group;
+    std::string interface_ip;
+    
+    // Parse command line arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "-multicast" && i + 1 < argc) {
+            multicast_group = argv[++i];
+        } else if (arg == "-iface" && i + 1 < argc) {
+            interface_ip = argv[++i];
+        }
+    }
 
     // Create a parser instance
     Parser parser;
+
+    // Configure multicast if specified
+    if (!multicast_group.empty() && !interface_ip.empty()) {
+        std::cout << "Configuring multicast with group: " << multicast_group << " and interface: " << interface_ip << std::endl;
+        parser.set_multicast(multicast_group, interface_ip);
+    }
 
     // Start the parser with the callback function
     parser.start_loop(port, handle_packet);
@@ -127,6 +144,5 @@ int main() {
     // Stop the parser
     parser.end_loop();
 
-    std::cout << "Parser has stopped after 60 seconds." << std::endl;
     return 0;
 }

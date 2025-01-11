@@ -54,6 +54,9 @@ public:
     // Stop the parsing loop and clean up resources
     void end_loop();
 
+    // Configure multicast settings
+    void set_multicast(const std::string& group, const std::string& iface);
+
 private:
     // Parsing automaton logic
     void parse_packet(const std::vector<uint8_t>& raw_packet);
@@ -86,6 +89,11 @@ private:
     static constexpr uint8_t ESC_CODE = 0x1B;
     static constexpr size_t TERMINAL_CODE_SIZE = 2;
     static constexpr size_t HEADER_LENGTH = 9;
+
+    // Multicast settings
+    std::string multicast_group;
+    std::string interface_ip;
+    bool use_multicast;
 };
 
 #endif // PARSER_H

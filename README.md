@@ -67,3 +67,19 @@ This script runs the test suite, where `TWSE_mocker.py` sends several example pa
 2. **Mocker Container**: Simulates the TWSE by sending example UDP packets to the parser.
 
 You should see the parser process and handle the packets sent by the mocker during the test.
+
+### Run main parser
+
+Run the main parser with testing mode.
+```bash
+cd build
+./main
+```
+Run the main parser with multicast mode.
+```bash
+./main -multicast 224.0.100.100 -iface 192.168.205.30
+```
+Rebuild if necessary.
+```bash
+cmake --build .
+```
