@@ -112,9 +112,7 @@ void Parser::receive_loop(int port) {
                                                      raw_packet.begin() + start_pos + packet_length);
                     
                     // Process single packet
-                    if (!single_packet.empty()) {
-                        parse_packet(single_packet);
-                    }
+                    parse_packet(single_packet);
                     
                     // Update start position for next packet
                     start_pos = i + 2;
