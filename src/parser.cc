@@ -1,8 +1,8 @@
 #include "parser.h"
-#include <iostream>
 #include <cstring>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sstream>
 
 // Constructor
 Parser::Parser() : running(false), use_multicast(false) {}
@@ -15,7 +15,7 @@ Parser::~Parser() {
 // Start the UDP stream parsing loop in a new thread
 void Parser::start_loop(int port, const PacketCallback& callback) {
     if (running) {
-        std::cerr << "Parser is already running!" << std::endl;
+        log_message("Parser is already running!", true);
         return;
     }
 
@@ -42,14 +42,14 @@ void Parser::receive_loop(int port) {
 
     // Create a UDP socket
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        std::cerr << "Socket creation failed: " << strerror(errno) << std::endl;
+        log_message("Socket creation failed: " + std::string(strerror(errno)), true);
         return;
     }
 
     // Enable SO_REUSEADDR
     int reuse = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-        std::cerr << "Failed to set SO_REUSEADDR: " << strerror(errno) << std::endl;
+        log_message("Failed to set SO_REUSEADDR: " + std::string(strerror(errno)), true);
         close(sockfd);
         return;
     }
@@ -60,7 +60,7 @@ void Parser::receive_loop(int port) {
     
     // Bind to the port
     if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        std::cerr << "Bind failed: " << strerror(errno) << std::endl;
+        log_message("Bind failed: " + std::string(strerror(errno)), true);
         close(sockfd);
         return;
     }
@@ -71,11 +71,13 @@ void Parser::receive_loop(int port) {
         mreq.imr_multiaddr.s_addr = inet_addr(multicast_group.c_str());
         mreq.imr_interface.s_addr = inet_addr(interface_ip.c_str());
 
-        std::cout << "Attempting to join multicast group " << multicast_group 
-                 << " on interface " << interface_ip << std::endl;
+        std::stringstream ss;
+        ss << "Attempting to join multicast group " << multicast_group 
+           << " on interface " << interface_ip;
+        log_message(ss.str());
 
         if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-            std::cerr << "Failed to join multicast group: " << strerror(errno) << std::endl;
+            log_message("Failed to join multicast group: " + std::string(strerror(errno)), true);
             close(sockfd);
             return;
         }
@@ -84,18 +86,19 @@ void Parser::receive_loop(int port) {
         struct in_addr local_interface{};
         local_interface.s_addr = inet_addr(interface_ip.c_str());
         if (setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF, &local_interface, sizeof(local_interface)) < 0) {
-            std::cerr << "Failed to set multicast interface: " << strerror(errno) << std::endl;
+            log_message("Failed to set multicast interface: " + std::string(strerror(errno)), true);
             close(sockfd);
             return;
         }
     }
 
-    std::cout << "Successfully initialized socket on port " << port;
+    std::stringstream init_ss;
+    init_ss << "Successfully initialized socket on port " << port;
     if (use_multicast) {
-        std::cout << " (multicast group: " << multicast_group 
-                 << ", interface: " << interface_ip << ")";
+        init_ss << " (multicast group: " << multicast_group 
+                << ", interface: " << interface_ip << ")";
     }
-    std::cout << std::endl;
+    log_message(init_ss.str());
 
     while (running) {
         ssize_t len = recv(sockfd, buffer, sizeof(buffer), 0);
@@ -119,7 +122,7 @@ void Parser::receive_loop(int port) {
                 }
             }
         } else if (len < 0) {
-            std::cerr << "Error receiving data: " << strerror(errno) << std::endl;
+            log_message("Error receiving data: " + std::string(strerror(errno)), true);
         }
     }
 
@@ -136,7 +139,7 @@ void Parser::set_multicast(const std::string& group, const std::string& iface) {
 // Parse the received packet
 void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     if (raw_packet.empty() || raw_packet[0] != ESC_CODE) {
-        std::cout << "Invalid packet" << std::endl;
+        log_message("Invalid packet");
         return; // Ignore packets that don't start with ESC-CODE
     }
 
@@ -145,31 +148,33 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
 
     // Parse the header
     if (!parse_header(raw_packet, packet, offset)) {
-        std::cout << "Invalid header" << std::endl;
+        log_message("Invalid header");
         return; // Ignore invalid packets
     }
 
     // Parse the body
     if (!parse_body(raw_packet, packet, offset)) {
-        std::cout << "Invalid body" << std::endl;
+        log_message("Invalid body");
         return; // Ignore invalid packets
     }
 
     // Validate the checksum
     if (!validate_checksum(raw_packet, packet)) {
-        std::cout << "Invalid checksum" << std::endl;
+        log_message("Invalid checksum");
         return; // Ignore invalid packets
     }
 
     // Validate the terminal code
     if (!validate_terminal_code(raw_packet, packet)) {
-        std::cout << "Invalid terminal code" << std::endl;
+        log_message("Invalid terminal code");
         return; // Ignore invalid packets
     }
 
     // If all checks pass, invoke the callback
     if (packet_callback) {
-        std::cout << "Received " << raw_packet.size() << " bytes" << std::endl;
+        std::stringstream ss;
+        ss << "Received " << raw_packet.size() << " bytes";
+        log_message(ss.str());
         packet_callback(packet);
     }
 }
@@ -261,4 +266,9 @@ bool Parser::validate_terminal_code(const std::vector<uint8_t>& raw_packet, cons
 // Determine checksum position dynamically
 size_t Parser::calculate_checksum_position(size_t packet_length) const {
     return packet_length - TERMINAL_CODE_SIZE - 1; // -1 for checksum byte
+}
+
+// Add logging function
+void Parser::log_message(const std::string& message, bool error) {
+    Logger::getInstance().log(message, error);
 }

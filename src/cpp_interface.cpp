@@ -3,16 +3,22 @@
 #include <vector>
 #include <cstdint>
 #include <iomanip>
+#include "logger.h"
+#include <sstream>
 
 // Helper function to print price and quantity in hex
 void print_price_quantity(const std::string& label, uint32_t price, uint32_t quantity) {
-    std::cout << label << ": Price = 0x" << std::hex << price
-              << ", Quantity = 0x" << quantity << std::dec << std::endl;
+    std::stringstream ss;
+    ss << label << ": Price = 0x" << std::hex << price
+       << ", Quantity = 0x" << quantity << std::dec;
+    Logger::getInstance().log(ss.str());
 }
 
 // Analyze the packet
 void analyze_packet(const Packet& packet) {
     // Check if the packet offers deal price/quantity
+    std::stringstream ss;
+    
     bool has_deal_price_quantity = (packet.display_item & 0b10000000) != 0;
 
     // Check if the packet offers bids
@@ -23,10 +29,10 @@ void analyze_packet(const Packet& packet) {
     uint8_t ask_count = (packet.display_item & 0b00001110) >> 1;
     bool has_asks = ask_count > 0;
 
-    // Display availability
-    std::cout << "Deal Price/Quantity: " << (has_deal_price_quantity ? "Yes" : "No") << std::endl;
-    std::cout << "Bids: " << (has_bids ? "Yes" : "No") << " (" << static_cast<int>(bid_count) << " levels)" << std::endl;
-    std::cout << "Asks: " << (has_asks ? "Yes" : "No") << " (" << static_cast<int>(ask_count) << " levels)" << std::endl;
+    ss << "Deal Price/Quantity: " << (has_deal_price_quantity ? "Yes" : "No") << "\n"
+       << "Bids: " << (has_bids ? "Yes" : "No") << " (" << static_cast<int>(bid_count) << " levels)\n"
+       << "Asks: " << (has_asks ? "Yes" : "No") << " (" << static_cast<int>(ask_count) << " levels)";
+    Logger::getInstance().log(ss.str());
 
     // Extract deal price and quantity
     size_t offset = 0;
@@ -77,19 +83,22 @@ void analyze_packet(const Packet& packet) {
 
 // Callback function to handle received packets
 void handle_packet(const Packet& packet) {
-    // Print basic information from the packet
-    std::cout << "Received Packet:" << std::endl;
-    std::cout << "Message Length: " << std::hex << packet.message_length << std::endl;
-    std::cout << "Business Type: " << static_cast<int>(packet.business_type) << std::endl;
-    std::cout << "Format Code: " << static_cast<int>(packet.format_code) << std::endl;
-    std::cout << "Format Version: " << static_cast<int>(packet.format_version) << std::endl;
-    std::cout << "Transmission Number: " << packet.transmission_number << std::endl;
-    std::cout << "Stock Code: " << std::string(packet.stock_code, 6) << std::endl;
-    std::cout << "Match Time: " << packet.match_time << std::endl;
-    std::cout << "Display Item: " << static_cast<int>(packet.display_item) << std::endl;
-    std::cout << "Limit Up Limit Down: " << static_cast<int>(packet.limit_up_limit_down) << std::endl;
-    std::cout << "Status Note: " << static_cast<int>(packet.status_note) << std::endl;
-    std::cout << "Cumulative Volume: " << packet.cumulative_volume << std::endl;
+    std::stringstream ss;
+    
+    ss << "Received Packet:\n"
+       << "Message Length: " << std::hex << packet.message_length << "\n"
+       << "Business Type: " << static_cast<int>(packet.business_type) << "\n"
+       << "Format Code: " << static_cast<int>(packet.format_code) << "\n"
+       << "Format Version: " << static_cast<int>(packet.format_version) << "\n"
+       << "Transmission Number: " << packet.transmission_number << "\n"
+       << "Stock Code: " << std::string(packet.stock_code, 6) << "\n"
+       << "Match Time: " << packet.match_time << "\n"
+       << "Display Item: " << static_cast<int>(packet.display_item) << "\n"
+       << "Limit Up Limit Down: " << static_cast<int>(packet.limit_up_limit_down) << "\n"
+       << "Status Note: " << static_cast<int>(packet.status_note) << "\n"
+       << "Cumulative Volume: " << packet.cumulative_volume;
+    
+    Logger::getInstance().log(ss.str());
 
     // Print prices and quantities
     for (size_t i = 0; i < packet.prices.size(); ++i) {
@@ -110,6 +119,13 @@ void handle_packet(const Packet& packet) {
 }
 
 int main(int argc, char* argv[]) {
+    // Initialize logger with timestamp in filename
+    time_t now = time(nullptr);
+    char timestamp[32];
+    strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", localtime(&now));
+    std::string log_filename = "parser_" + std::string(timestamp) + ".log";
+    Logger::getInstance().init(log_filename);
+
     const int port = 10000;
     std::string multicast_group;
     std::string interface_ip;
@@ -129,14 +145,14 @@ int main(int argc, char* argv[]) {
 
     // Configure multicast if specified
     if (!multicast_group.empty() && !interface_ip.empty()) {
-        std::cout << "Configuring multicast with group: " << multicast_group << " and interface: " << interface_ip << std::endl;
+        Logger::getInstance().log("Configuring multicast with group: " + multicast_group + 
+                                " and interface: " + interface_ip);
         parser.set_multicast(multicast_group, interface_ip);
     }
 
     // Start the parser with the callback function
     parser.start_loop(port, handle_packet);
-
-    std::cout << "Parser is running. It will stop automatically after 60 seconds..." << std::endl;
+    Logger::getInstance().log("Parser is running. It will stop automatically after 60 seconds...");
 
     // Wait for 60 seconds
     std::this_thread::sleep_for(std::chrono::seconds(60));
