@@ -172,9 +172,6 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
 
     // If all checks pass, invoke the callback
     if (packet_callback) {
-        std::stringstream ss;
-        ss << "Received " << raw_packet.size() << " bytes";
-        log_message(ss.str());
         packet_callback(packet);
     }
 }
@@ -270,5 +267,5 @@ size_t Parser::calculate_checksum_position(size_t packet_length) const {
 
 // Add logging function
 void Parser::log_message(const std::string& message, bool error) {
-    Logger::getInstance().log(message, error);
+    Logger::getInstance().log(message, "", error);
 }
