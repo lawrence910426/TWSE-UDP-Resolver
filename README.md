@@ -79,6 +79,10 @@ Run the main parser with multicast mode.
 ```bash
 ./main -multicast 224.0.100.100 -iface 192.168.205.30
 ```
+Run the main parser with stock filter mode.
+```bash
+./main -stock 2330
+```
 Rebuild if necessary.
 ```bash
 cmake --build .
