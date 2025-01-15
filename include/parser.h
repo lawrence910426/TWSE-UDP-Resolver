@@ -10,6 +10,8 @@
 #include <condition_variable>
 #include <queue>
 #include <cstdint>
+#include <fstream>
+#include "logger.h"
 
 // Callback type for handling recorded packets
 using PacketCallback = std::function<void(const struct Packet&)>;
@@ -94,6 +96,8 @@ private:
     std::string multicast_group;
     std::string interface_ip;
     bool use_multicast;
+    
+    void log_message(const std::string& message, bool error = false);
 };
 
 #endif // PARSER_H
