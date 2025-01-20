@@ -8,6 +8,8 @@ Among all packet formats, only **Format 6** is transmitted in real-time. Other f
 
 ## Build and Install
 ```
+git clone https://github.com/lawrence910426/TWSE-UDP-Resolver.git
+git pull --recurse-submodules && git submodule update --init --recursive
 pip install .
 ```
 
