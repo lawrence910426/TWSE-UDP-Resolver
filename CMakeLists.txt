@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.10) # Minimum CMake version supporting C++17
-
+cmake_minimum_required(VERSION 3.15...3.29)
 # Set project name and version
 project(main VERSION 1.0 LANGUAGES CXX)
 
