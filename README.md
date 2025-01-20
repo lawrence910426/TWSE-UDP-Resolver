@@ -6,7 +6,7 @@ Among all packet formats, only **Format 6** is transmitted in real-time. Other f
 
 ---
 
-## Install (Python)
+## Build and Install
 ```
 pip install .
 ```
@@ -17,6 +17,8 @@ pip install .
 ```
 # Not implemented yet.
 ```
+
+Refer to our [example]().
 
 ---
 
@@ -40,19 +42,6 @@ int main() {
     parser.end_loop();
     return 0;
 }
-```
-
----
-
-## Build
-
-This project uses **CMake** for building. It compiles `parser.h` and `parser.cc` into an object file and links it with `main.cpp` to create the final executable.
-
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build .
 ```
 
 ---
@@ -82,18 +71,17 @@ This script runs the test suite, where `TWSE_mocker.py` sends several example pa
 
 You should see the parser process and handle the packets sent by the mocker during the test.
 
-### Run main parser
+### Run the cpp parser
 
-Run the main parser with testing mode.
+Run the cpp parser with testing mode.
+
 ```bash
 cd build
-./main
+./twse_udp_resolver_cpp_interface
 ```
-Run the main parser with multicast mode.
+
+Run the cpp parser with multicast mode.
+
 ```bash
-./main -multicast 224.0.100.100 -iface 192.168.205.30
-```
-Rebuild if necessary.
-```bash
-cmake --build .
+./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
 ```
