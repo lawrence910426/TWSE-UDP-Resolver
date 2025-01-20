@@ -6,7 +6,21 @@ Among all packet formats, only **Format 6** is transmitted in real-time. Other f
 
 ---
 
-## Usage
+## Install (Python)
+```
+pip install .
+```
+
+---
+
+## Usage (Python)
+```
+# Not implemented yet.
+```
+
+---
+
+## Usage (C/C++)
 
 ```cpp
 #include "parser.h"
