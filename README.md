@@ -50,7 +50,11 @@ int main() {
 
 ## Benchmark Results
 
-*To be added.*
+In the IDC data center test environment provided by Sinopac, we observed that directly decoding UDP packets was roughly 2,000 microseconds faster than [shioaji](https://sinotrade.github.io/zh_TW/).
+
+In the chart below, the horizontal axis shows Shioaji’s latency minus the UDP packet latency, and the vertical axis indicates the number of occurrences.
+
+()[./images/benchmark_vm.png]
 
 ---
 
