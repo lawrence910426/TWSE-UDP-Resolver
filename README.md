@@ -49,7 +49,7 @@ In the IDC data center test environment provided by Sinopac, we observed that di
 
 In the chart below, the horizontal axis shows Shioaji’s latency minus the UDP packet latency, and the vertical axis indicates the number of occurrences.
 
-()[./images/benchmark_vm.png]
+![](./images/benchmark_vm.png)
 
 ---
 
