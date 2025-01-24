@@ -86,7 +86,7 @@ cd build
 ./twse_udp_resolver_cpp_interface
 ```
 
-Run the main parser with multicast mode.
+Run the cpp example with multicast mode.
 
 ```bash
 ./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
@@ -98,8 +98,12 @@ Run the cpp example with stock filter mode.
 ./twse_udp_resolver_cpp_interface -stock 2330
 ```
 
-Run the main parser with benchmark mode.
+Run the cpp example with benchmark mode.
 
 ```bash
 ./twse_udp_resolver_cpp_interface -mode benchmark
 ```
+
+### Run the python example
+
+Not implemented yet.
