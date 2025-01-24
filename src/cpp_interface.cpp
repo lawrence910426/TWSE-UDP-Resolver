@@ -5,6 +5,8 @@
 #include <iomanip>
 #include "logger.h"
 #include <sstream>
+#include <csignal>
+#include <atomic>
 
 // Helper function to print price and quantity in hex
 void print_price_quantity(const std::string& label, uint32_t price, uint32_t quantity, const std::string& stock_code) {
@@ -80,9 +82,16 @@ void analyze_packet(const Packet& packet, const std::string& stock_code) {
 }
 
 // Callback function to handle received packets
-void handle_packet(const Packet& packet) {
+void handle_packet(const Packet& packet, const std::string& mode) {
     std::string stock_code(packet.stock_code, 6);
     std::stringstream ss;
+
+    if (mode == "benchmark") {
+        // benchmark mode
+        ss << "Match Time: " <<  std::hex << packet.match_time;
+        Logger::getInstance().log(ss.str(), stock_code);
+        return;
+    }
     
     ss << "Received Packet:\n"
        << "Message Length: " << std::hex << packet.message_length << "\n"
@@ -136,6 +145,7 @@ int main(int argc, char* argv[]) {
     std::string multicast_group;
     std::string interface_ip;
     std::string logger_stock;
+    std::string mode;
     
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -147,6 +157,8 @@ int main(int argc, char* argv[]) {
         } else if (arg == "-stock" && i + 1 < argc) {
             logger_stock = argv[++i];
             Logger::getInstance().setStockFilter(logger_stock);
+        } else if (arg == "-mode" && i + 1 < argc) {
+            mode = argv[++i];
         }
     }
 
@@ -161,11 +173,12 @@ int main(int argc, char* argv[]) {
     }
 
     // Start the parser with the callback function
-    parser.start_loop(port, handle_packet);
-    Logger::getInstance().log("Parser is running. It will stop automatically after 60 seconds...");
+    parser.start_loop(port, [mode](const Packet& p) { handle_packet(p, mode); });
 
-    // Wait for 60 seconds
-    std::this_thread::sleep_for(std::chrono::seconds(60));
+    // non stop looping
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 
     // Stop the parser
     parser.end_loop();

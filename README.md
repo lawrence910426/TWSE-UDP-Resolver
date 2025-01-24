@@ -91,7 +91,22 @@ Run the cpp parser with multicast mode.
 ```bash
 ./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
 ```
+<<<<<<< HEAD
 
 ### Run the python example
 
 Not implemented.
+=======
+Run the main parser with stock filter mode.
+```bash
+./main -stock 2330
+```
+Run the main parser with benchmark mode.
+```bash
+./main -mode benchmark
+```
+Rebuild if necessary.
+```bash
+cmake --build .
+```
+>>>>>>> c5769a6 (feat: add benchmark mode, log only match time information)
