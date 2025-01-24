@@ -91,8 +91,9 @@ Run the main parser with multicast mode.
 ```bash
 ./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
 ```
-<<<<<<< HEAD
+
 Run the cpp example with stock filter mode.
+
 ```bash
 ./twse_udp_resolver_cpp_interface -stock 2330
 ```
@@ -100,11 +101,5 @@ Run the cpp example with stock filter mode.
 Run the main parser with benchmark mode.
 
 ```bash
-./main -mode benchmark
+./twse_udp_resolver_cpp_interface -mode benchmark
 ```
-=======
-
-### Run the python example
-
-Not implemented.
->>>>>>> 3610d97 (feat: python example)
