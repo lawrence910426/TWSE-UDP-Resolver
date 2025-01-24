@@ -6,15 +6,10 @@ Among all packet formats, only **Format 6** is transmitted in real-time. Other f
 
 ---
 
-<<<<<<< HEAD
 ## Build and Install
 ```
 git clone https://github.com/lawrence910426/TWSE-UDP-Resolver.git
 git pull --recurse-submodules && git submodule update --init --recursive
-=======
-## Install (Python)
-```
->>>>>>> c1fc096 (feat: basic structure of python interface)
 pip install .
 ```
 
@@ -25,11 +20,8 @@ pip install .
 # Not implemented yet.
 ```
 
-<<<<<<< HEAD
 Refer to our [example]().
 
-=======
->>>>>>> c1fc096 (feat: basic structure of python interface)
 ---
 
 ## Usage (C/C++)
@@ -87,32 +79,27 @@ You should see the parser process and handle the packets sent by the mocker duri
 
 ### Run the cpp example
 
-Run the cpp parser with testing mode.
+Run the cpp example with testing mode.
 
 ```bash
 cd build
 ./twse_udp_resolver_cpp_interface
 ```
 
-Run the cpp example with multicast mode.
+Run the main parser with multicast mode.
 
 ```bash
 ./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
 ```
 
-Run the cpp example with stock filter mode.
+Run the main parser with stock filter mode.
 
 ```bash
-./main -stock 2330
+./twse_udp_resolver_cpp_interface -stock 2330
 ```
 
-Run the cpp example with benchmark mode.
+Run the main parser with benchmark mode.
 
 ```bash
 ./main -mode benchmark
 ```
-
-
-### Run the python example
-
-Not implemented.
