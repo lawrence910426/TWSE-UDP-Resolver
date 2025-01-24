@@ -5,6 +5,7 @@
     "cmake.buildDirectory": "${workspaceFolder}/build",
     "cmake.defaultBuildType": "Debug", // Use "Release" for optimized builds
     "files.associations": {
+        "*.py": "python",
         "*.tpp": "cpp",
         "iostream": "cpp",
         "__bit_reference": "cpp",
@@ -72,6 +73,18 @@
         "chrono": "cpp",
         "compare": "cpp",
         "concepts": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "*.tcc": "cpp",
+        "csignal": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "utility": "cpp",
+        "fstream": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp"
     }
 }
