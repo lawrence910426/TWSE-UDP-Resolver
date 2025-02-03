@@ -32,15 +32,15 @@ target_include_directories(twse_udp_resolver PRIVATE include)
 target_link_libraries(twse_udp_resolver PRIVATE parser pthread)
 
 # Add the cpp executable
-add_executable(${PROJECT_NAME}_cpp_interface src/cpp_interface.cpp)
+add_executable(${PROJECT_NAME}_twse_udp_resolver_cpp_interface example/twse_udp_resolver_cpp_interface.cpp)
 
 # Include directories for the main executable
-target_include_directories(${PROJECT_NAME}_cpp_interface PRIVATE include)
+target_include_directories(${PROJECT_NAME}_twse_udp_resolver_cpp_interface PRIVATE include)
 
 # Link the cpp executable with the parser library and pthread
-target_link_libraries(${PROJECT_NAME}_cpp_interface PRIVATE parser pthread)
+target_link_libraries(${PROJECT_NAME}_twse_udp_resolver_cpp_interface PRIVATE parser pthread)
 
 # Set the runtime output directory for the executable
-set_target_properties(${PROJECT_NAME}_cpp_interface PROPERTIES
+set_target_properties(${PROJECT_NAME}_twse_udp_resolver_cpp_interface PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"
 )

@@ -19,6 +19,7 @@ WORKDIR /app
 # Copy source files and CMakeLists.txt into the container
 COPY ./src ./src
 COPY ./include ./include
+COPY ./example ./example
 COPY ./CMakeLists.txt .
 COPY ./test ./test
 
