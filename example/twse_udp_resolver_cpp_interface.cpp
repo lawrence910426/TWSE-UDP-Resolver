@@ -133,15 +133,7 @@ void handle_packet(const Packet& packet, const std::string& mode) {
     Logger::getInstance().log("========================", stock_code);
 }
 
-int main(int argc, char* argv[]) {
-    // Initialize logger with timestamp in filename
-    time_t now = time(nullptr);
-    char timestamp[32];
-    strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", localtime(&now));
-    std::string log_filename = "parser_" + std::string(timestamp) + ".log";
-    Logger::getInstance().init(log_filename);
-
-    const int port = 10000;
+int main(int argc, char* argv[]) {const int port = 10000;
     std::string multicast_group;
     std::string interface_ip;
     std::string logger_stock;

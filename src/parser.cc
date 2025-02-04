@@ -5,7 +5,14 @@
 #include <sstream>
 
 // Constructor
-Parser::Parser() : running(false), use_multicast(false) {}
+Parser::Parser() : running(false), use_multicast(false) {
+    // Initialize logger with timestamp in filename
+    time_t now = time(nullptr);
+    char timestamp[32];
+    strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", localtime(&now));
+    std::string log_filename = "parser_" + std::string(timestamp) + ".log";
+    Logger::getInstance().init(log_filename);
+}
 
 // Destructor
 Parser::~Parser() {
