@@ -2,7 +2,7 @@
 
 # Build the Docker image
 cd ..
-docker rm twse-udp-resolver-img
+docker rmi twse-udp-resolver-img
 docker build . -t twse-udp-resolver-img
 SESSION_NAME="twse-udp-resolver-testing"
 
@@ -16,7 +16,7 @@ tmux send-keys -t $SESSION_NAME \
 # Create a new pane and start the mocker container
 tmux split-window -h -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME \
-    "docker exec -it testing-container ./build/main" C-m
+    "docker exec -it testing-container ./build/twse_udp_resolver_cpp_interface" C-m
 
 # Attach to the tmux session
 tmux attach-session -t $SESSION_NAME

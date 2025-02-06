@@ -20,6 +20,7 @@ WORKDIR /app
 COPY ./src ./src
 COPY ./include ./include
 COPY ./example ./example
+COPY ./extern ./extern
 COPY ./CMakeLists.txt .
 COPY ./test ./test
 
