@@ -147,6 +147,12 @@ void Parser::set_multicast(const std::string& group, const std::string& iface) {
 void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     if (raw_packet.empty() || raw_packet[0] != ESC_CODE) {
         log_message("Invalid packet");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore packets that don't start with ESC-CODE
     }
 
@@ -156,18 +162,36 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     // Parse the header
     if (!parse_header(raw_packet, packet, offset)) {
         log_message("Invalid header");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore invalid packets
     }
 
     // Parse the body
     if (!parse_body(raw_packet, packet, offset)) {
         log_message("Invalid body");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore invalid packets
     }
 
     // Validate the checksum
     if (!validate_checksum(raw_packet, packet)) {
         log_message("Invalid checksum");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore invalid packets
     }
 
