@@ -53,7 +53,7 @@ public:
 
     void log(const std::string& message, const std::string& stock_code = "", bool error = false) {
         if (!log_file.is_open()) return;
-
+        std::cout << "log: " << message << std::endl;
         // If filter is set and stock code doesn't match, skip logging
         if (!filtered_stock.empty() && !stock_code.empty() && stock_code != filtered_stock) {
             return;
