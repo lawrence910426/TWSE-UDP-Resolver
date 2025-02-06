@@ -38,7 +38,7 @@ def create_packet_1():
     )
 
     # Calculate checksum
-    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    checksum = bytes([calculate_checksum(header + body)])
 
     # TERMINAL-CODE
     terminal_code = b'\x0D\x0A'
@@ -64,7 +64,7 @@ def create_packet_2():
         b'\x00\x00\x13\x70\x00\x00\x00\x00\x69'
         b'\x00\x00\x13\x65\x00\x00\x00\x00\x81'
     )
-    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    checksum = bytes([calculate_checksum(header + body)])
     terminal_code = b'\x0D\x0A'
 
     return esc_code + header + body + checksum + terminal_code
@@ -88,7 +88,7 @@ def create_packet_3():
         b'\x00\x00\x11\x65\x00\x00\x00\x00\x28'
         b'\x00\x00\x11\x70\x00\x00\x00\x00\x19'
     )
-    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    checksum = bytes([calculate_checksum(header + body)])
     terminal_code = b'\x0D\x0A'
 
     return esc_code + header + body + checksum + terminal_code
@@ -116,7 +116,7 @@ def create_packet_4():
         b'\x00\x00\x16\x90\x00\x00\x00\x04\x78'
         b'\x00\x00\x16\x95\x00\x00\x00\x02\x15'
     )
-    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    checksum = bytes([calculate_checksum(header + body)])
     terminal_code = b'\x0D\x0A'
 
     return esc_code + header + body + checksum + terminal_code
@@ -140,7 +140,7 @@ def create_packet_useless_format():
         b'\x00\x00\x11\x65\x00\x00\x00\x00\x28'
         b'\x00\x00\x11\x70\x00\x00\x00\x00\x19'
     )
-    checksum = bytes([calculate_checksum(esc_code + header + body)])
+    checksum = bytes([calculate_checksum(header + body)])
     terminal_code = b'\x0D\x0A'
 
     return esc_code + header + body + checksum + terminal_code
