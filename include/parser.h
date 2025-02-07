@@ -100,7 +100,7 @@ private:
     std::string interface_ip;
     bool use_multicast;
     
-    int sockfd = -1;  // 初始化為 -1
+    int sockfd = -1;
     
     void log_message(const std::string& message, bool error = false);
 };

@@ -132,10 +132,10 @@ void Parser::receive_loop(int port) {
                 }
             }
         } else if (len < 0) {
-            if (errno != EINTR && errno != EBADF) {  // 忽略正常的中斷錯誤
+            if (errno != EINTR && errno != EBADF) {  // ignore EINTR and EBADF
                 log_message("Error receiving data: " + std::string(strerror(errno)), true);
             }
-            break;  // 跳出迴圈
+            break;
         }
     }
 }
