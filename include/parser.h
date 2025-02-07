@@ -58,10 +58,7 @@ public:
 
     // Configure multicast settings
     void set_multicast(const std::string& group, const std::string& iface);
-
-    // Configure stock filter
-    void set_stock_filter(const std::string& stock);
-
+    
 private:
     // Parsing automaton logic
     void parse_packet(const std::vector<uint8_t>& raw_packet);
