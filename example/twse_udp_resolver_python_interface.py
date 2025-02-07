@@ -119,7 +119,7 @@ def handle_packet(packet, mode, logger_stock):
         logging.info(terminal_ss)
 
         logging.info("=== Analyzed Packet ===")
-        analyze_packet(packet)  # 分析封包
+        analyze_packet(packet)
         logging.info("========================")
             
     except Exception as e:
