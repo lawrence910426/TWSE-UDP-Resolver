@@ -37,18 +37,18 @@ void Parser::end_loop() {
 
     running = false;
     if (recv_thread.joinable()) {
+        if (sockfd != -1) {
+            shutdown(sockfd, SHUT_RDWR);
+            close(sockfd);
+        }
         recv_thread.join();
     }
 }
 
 // Receive UDP packets and feed them into the parser
 void Parser::receive_loop(int port) {
-    int sockfd;
-    sockaddr_in server_addr{};
-    char buffer[1500]; // Maximum UDP packet size
-
-    // Create a UDP socket
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
         log_message("Socket creation failed: " + std::string(strerror(errno)), true);
         return;
     }
@@ -61,6 +61,7 @@ void Parser::receive_loop(int port) {
         return;
     }
 
+    sockaddr_in server_addr{};
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -107,6 +108,8 @@ void Parser::receive_loop(int port) {
     }
     log_message(init_ss.str());
 
+    char buffer[1500]; // Maximum UDP packet size
+
     while (running) {
         ssize_t len = recv(sockfd, buffer, sizeof(buffer), 0);
         if (len > 0) {
@@ -129,11 +132,12 @@ void Parser::receive_loop(int port) {
                 }
             }
         } else if (len < 0) {
-            log_message("Error receiving data: " + std::string(strerror(errno)), true);
+            if (errno != EINTR && errno != EBADF) {  // 忽略正常的中斷錯誤
+                log_message("Error receiving data: " + std::string(strerror(errno)), true);
+            }
+            break;  // 跳出迴圈
         }
     }
-
-    close(sockfd);
 }
 
 // Add a new method to configure multicast
@@ -141,6 +145,11 @@ void Parser::set_multicast(const std::string& group, const std::string& iface) {
     multicast_group = group;
     interface_ip = iface;
     use_multicast = true;
+}
+
+// Add a new method to configure stock filter
+void Parser::set_stock_filter(const std::string& stock) {
+    Logger::getInstance().setStockFilter(stock);
 }
 
 // Parse the received packet

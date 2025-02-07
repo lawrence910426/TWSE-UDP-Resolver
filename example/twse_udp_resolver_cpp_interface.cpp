@@ -133,7 +133,11 @@ void handle_packet(const Packet& packet, const std::string& mode) {
     Logger::getInstance().log("========================", stock_code);
 }
 
-int main(int argc, char* argv[]) {const int port = 10000;
+int main(int argc, char* argv[]) {
+    // Create a parser instance
+    Parser parser;
+
+    const int port = 10000;
     std::string multicast_group;
     std::string interface_ip;
     std::string logger_stock;
@@ -148,14 +152,12 @@ int main(int argc, char* argv[]) {const int port = 10000;
             interface_ip = argv[++i];
         } else if (arg == "-stock" && i + 1 < argc) {
             logger_stock = argv[++i];
-            Logger::getInstance().setStockFilter(logger_stock);
+            parser.set_stock_filter(logger_stock);
         } else if (arg == "-mode" && i + 1 < argc) {
             mode = argv[++i];
         }
     }
 
-    // Create a parser instance
-    Parser parser;
 
     // Configure multicast if specified
     if (!multicast_group.empty() && !interface_ip.empty()) {
