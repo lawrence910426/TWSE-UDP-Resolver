@@ -147,11 +147,6 @@ void Parser::set_multicast(const std::string& group, const std::string& iface) {
     use_multicast = true;
 }
 
-// Add a new method to configure stock filter
-void Parser::set_stock_filter(const std::string& stock) {
-    Logger::getInstance().setStockFilter(stock);
-}
-
 // Parse the received packet
 void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     if (raw_packet.empty() || raw_packet[0] != ESC_CODE) {
@@ -307,5 +302,5 @@ size_t Parser::calculate_checksum_position(size_t packet_length) const {
 
 // Add logging function
 void Parser::log_message(const std::string& message, bool error) {
-    Logger::getInstance().log(message, "", error);
+    Logger::getInstance().log(message, error);
 }

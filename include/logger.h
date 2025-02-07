@@ -39,25 +39,9 @@ public:
         }
     }
 
-    void setStockFilter(const std::string& stock_code) {
-        if (!stock_code.empty()) {
-            // Pad with spaces to match the format (e.g., "2330" -> "2330  ")
-            filtered_stock = stock_code;
-            filtered_stock.resize(6, ' ');  // Pad with spaces to make it 6 characters
-            log("Stock filter set to: " + filtered_stock);
-        } else {
-            filtered_stock.clear();
-            log("Stock filter cleared");
-        }
-    }
-
-    void log(const std::string& message, const std::string& stock_code = "", bool error = false) {
+    void log(const std::string& message, bool error = false) {
         if (!log_file.is_open()) return;
-        // If filter is set and stock code doesn't match, skip logging
-        if (!filtered_stock.empty() && !stock_code.empty() && stock_code != filtered_stock) {
-            return;
-        }
-
+        
         auto now = std::chrono::system_clock::now();
         auto now_time_t = std::chrono::system_clock::to_time_t(now);
         auto now_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
