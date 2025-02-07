@@ -3,3 +3,4 @@ build
 /virtual
 test.py
 logger
+*.log
