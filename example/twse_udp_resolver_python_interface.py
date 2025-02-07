@@ -3,6 +3,7 @@ import logging
 import sys
 import time
 import argparse
+from functools import partial
 
 logging.basicConfig(
     format='%(asctime)s.%(msecs)03d %(levelname)s:\t%(message)s',
@@ -14,21 +15,61 @@ logging.basicConfig(
 logging.getLogger().setLevel(logging.NOTSET)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-def handle_packet(packet):
+def handle_packet(packet, mode, logger_stock):
     try:
         # Check if packet is None
         if packet is None:
             logging.warning("Received None packet")
             return
+        
+        # Check if logger_stock is set
+        if logger_stock:
+            logging.info(f"logger_stock: {logger_stock} type: {type(logger_stock)}")
+            logging.info(f"packet.stock_code: {packet.stock_code} type: {type(packet.stock_code)}")
+            if packet.stock_code != logger_stock:
+                return
+            
+        # benchmark mode
+        if mode == "benchmark":
+            message = f"Match Time: {packet.match_time}"
+            logging.info(message)
+            return
             
         # Access packet properties directly
-        logging.info(f"Received packet for stock: {packet.stock_code}")
-        logging.info(f"Match time: {hex(packet.match_time)}")
-        logging.info(f"Cumulative volume: {packet.cumulative_volume}")
+        message = f"Received Packet:\n"
+        message += f"Message Length: {packet.message_length}\n"
+        message += f"Business Type: {packet.business_type}\n"
+        message += f"Format Code: {packet.format_code}\n"
+        message += f"Format Version: {packet.format_version}\n"
+        message += f"Transmission Number: {packet.transmission_number}\n"
+        message += f"Stock Code: {packet.stock_code}\n"
+        message += f"Match Time: {packet.match_time}\n"
+        message += f"Display Item: {packet.display_item}\n"
+        message += f"Limit Up Limit Down: {packet.limit_up_limit_down}\n"
+        message += f"Status Note: {packet.status_note}\n"
+        message += f"Cumulative Volume: {packet.cumulative_volume}"
+        logging.info(message)
         
-        # Output prices and quantities
-        for i, (price, quantity) in enumerate(zip(packet.prices, packet.quantities)):
-            logging.info(f"Level {i+1}: Price={price}, Quantity={quantity}")
+        
+        # Print prices and quantities
+        for i in range(len(packet.prices)):
+            price_ss = f"Price {i + 1}: {packet.prices[i]}, Quantity: "
+            if i < len(packet.quantities):
+                price_ss += str(packet.quantities[i])
+            else:
+                price_ss += "N/A"
+            logging.info(price_ss)
+
+
+        checksum_ss = f"Checksum: {packet.checksum}"
+        logging.info(checksum_ss)
+
+        terminal_ss = f"Terminal Code: 0x{packet.terminal_code:x}"
+        logging.info(terminal_ss)
+
+        logging.info("=== Analyzed Packet ===")
+        # analyze_packet(packet, stock_code); # Analyze the packet
+        logging.info("========================")
             
     except Exception as e:
         logging.error(f"Error handling packet: {str(e)}")
@@ -47,6 +88,8 @@ if __name__ == "__main__":
     try:
         args = parse_arguments()
         port = 10000
+        mode = args.mode if args.mode else "normal"
+        stock = args.stock.ljust(6, ' ') if args.stock else None
         
         parser = twse_udp_resolver.Parser()
         
@@ -55,14 +98,12 @@ if __name__ == "__main__":
             parser.set_multicast(args.multicast, args.iface)
             logging.info(f"Configured multicast: group={args.multicast}, interface={args.iface}")
         
-        # Set stock filter if specified
-        if args.stock:
-            logging.info(f"Setting stock filter: {args.stock}")
-            parser.set_stock_filter(args.stock)
+        # Create a partial function with mode and stock parameters
+        packet_handler = partial(handle_packet, mode=mode, logger_stock=stock)
         
-        # Start the parser
+        # Start the parser with the partial function
         logging.info(f"Starting parser on port {port}")
-        parser.start_loop(port, handle_packet)
+        parser.start_loop(port, packet_handler)
         
         # non stop looping
         while True:

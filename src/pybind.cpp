@@ -35,6 +35,5 @@ PYBIND11_MODULE(twse_udp_resolver, m) {
         .def(py::init<>())
         .def("start_loop", &Parser::start_loop, "Start the UDP stream parsing loop")
         .def("end_loop", &Parser::end_loop, "Stop the parsing loop")
-        .def("set_multicast", &Parser::set_multicast, "Sets the parameter of multicast")
-        .def("set_stock_filter", &Parser::set_stock_filter, "Sets the stock filter");
+        .def("set_multicast", &Parser::set_multicast, "Sets the parameter of multicast");
 }
