@@ -15,6 +15,59 @@ logging.basicConfig(
 logging.getLogger().setLevel(logging.NOTSET)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
+def analyze_packet(packet):
+    # Check if the packet offers deal price/quantity
+    has_deal_price_quantity = (packet.display_item & 0b10000000) != 0
+    
+    # Check if the packet offers bids
+    bid_count = (packet.display_item & 0b01110000) >> 4
+    has_bids = bid_count > 0
+    
+    # Check if the packet offers asks
+    ask_count = (packet.display_item & 0b00001110) >> 1
+    has_asks = ask_count > 0
+    
+    logging.info(f"Deal Price/Quantity: {'Yes' if has_deal_price_quantity else 'No'}")
+    logging.info(f"Bids: {'Yes' if has_bids else 'No'} ({bid_count} levels)")
+    logging.info(f"Asks: {'Yes' if has_asks else 'No'} ({ask_count} levels)")
+    
+    # Extract deal price and quantity
+    offset = 0
+    if has_deal_price_quantity:
+        deal_price = packet.prices[offset]
+        deal_quantity = packet.quantities[offset]
+        logging.info(f"Deal: Price = 0x{deal_price:x}, Quantity = 0x{deal_quantity:x}")
+        offset += 1
+    
+    # Extract bid prices and quantities
+    for i in range(bid_count):
+        bid_price = packet.prices[offset]
+        bid_quantity = packet.quantities[offset]
+        logging.info(f"Bid {i + 1}: Price = 0x{bid_price:x}, Quantity = 0x{bid_quantity:x}")
+        offset += 1
+    
+    # Extract ask prices and quantities
+    for i in range(ask_count):
+        ask_price = packet.prices[offset]
+        ask_quantity = packet.quantities[offset]
+        logging.info(f"Ask {i + 1}: Price = 0x{ask_price:x}, Quantity = 0x{ask_quantity:x}")
+        offset += 1
+    
+    # Check if deal price is at bid or ask
+    if has_deal_price_quantity and has_bids and has_asks:
+        deal_price = packet.prices[0]  # Deal price is always the first price
+        best_bid = packet.prices[1 if has_deal_price_quantity else 0]  # First bid
+        best_ask = packet.prices[1 + bid_count if has_deal_price_quantity else bid_count]  # First ask
+        
+        if deal_price == best_bid:
+            logging.info("Deal price is at bid")
+        elif deal_price == best_ask:
+            logging.info("Deal price is at ask")
+        else:
+            logging.info("Deal price is neither at bid nor ask")
+    else:
+        logging.info("Not enough information to determine deal price position")
+
 def handle_packet(packet, mode, logger_stock):
     try:
         # Check if packet is None
@@ -24,8 +77,6 @@ def handle_packet(packet, mode, logger_stock):
         
         # Check if logger_stock is set
         if logger_stock:
-            logging.info(f"logger_stock: {logger_stock} type: {type(logger_stock)}")
-            logging.info(f"packet.stock_code: {packet.stock_code} type: {type(packet.stock_code)}")
             if packet.stock_code != logger_stock:
                 return
             
@@ -37,17 +88,17 @@ def handle_packet(packet, mode, logger_stock):
             
         # Access packet properties directly
         message = f"Received Packet:\n"
-        message += f"Message Length: {packet.message_length}\n"
+        message += f"Message Length: {packet.message_length:x}\n"
         message += f"Business Type: {packet.business_type}\n"
         message += f"Format Code: {packet.format_code}\n"
         message += f"Format Version: {packet.format_version}\n"
-        message += f"Transmission Number: {packet.transmission_number}\n"
+        message += f"Transmission Number: {packet.transmission_number:x}\n"
         message += f"Stock Code: {packet.stock_code}\n"
-        message += f"Match Time: {packet.match_time}\n"
-        message += f"Display Item: {packet.display_item}\n"
-        message += f"Limit Up Limit Down: {packet.limit_up_limit_down}\n"
-        message += f"Status Note: {packet.status_note}\n"
-        message += f"Cumulative Volume: {packet.cumulative_volume}"
+        message += f"Match Time: {packet.match_time:x}\n"
+        message += f"Display Item: {packet.display_item:x}\n"
+        message += f"Limit Up Limit Down: {packet.limit_up_limit_down:x}\n"
+        message += f"Status Note: {packet.status_note:x}\n"
+        message += f"Cumulative Volume: {packet.cumulative_volume:x}"
         logging.info(message)
         
         
@@ -68,7 +119,7 @@ def handle_packet(packet, mode, logger_stock):
         logging.info(terminal_ss)
 
         logging.info("=== Analyzed Packet ===")
-        # analyze_packet(packet, stock_code); # Analyze the packet
+        analyze_packet(packet)  # 分析封包
         logging.info("========================")
             
     except Exception as e:
