@@ -1,2 +1,6 @@
 build
 *.egg*
+/virtual
+test.py
+logger
+*.log

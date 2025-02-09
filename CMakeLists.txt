@@ -32,7 +32,7 @@ target_include_directories(twse_udp_resolver PRIVATE include)
 target_link_libraries(twse_udp_resolver PRIVATE parser pthread)
 
 # Add the cpp executable
-add_executable(${PROJECT_NAME}_cpp_interface src/cpp_interface.cpp)
+add_executable(${PROJECT_NAME}_cpp_interface example/twse_udp_resolver_cpp_interface.cpp)
 
 # Include directories for the main executable
 target_include_directories(${PROJECT_NAME}_cpp_interface PRIVATE include)

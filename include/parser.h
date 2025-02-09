@@ -58,7 +58,7 @@ public:
 
     // Configure multicast settings
     void set_multicast(const std::string& group, const std::string& iface);
-
+    
 private:
     // Parsing automaton logic
     void parse_packet(const std::vector<uint8_t>& raw_packet);
@@ -96,6 +96,8 @@ private:
     std::string multicast_group;
     std::string interface_ip;
     bool use_multicast;
+    
+    int sockfd = -1;
     
     void log_message(const std::string& message, bool error = false);
 };

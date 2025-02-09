@@ -16,11 +16,23 @@ pip install .
 ---
 
 ## Usage (Python)
-```
-# Not implemented yet.
+```python
+import twse_udp_resolver
+
+def handle_packet(packet):
+    print("Received packet: ")
+    print("Message Length: ", packet.message_length)
+    print("Business Type: ", packet.business_type)
+    print("Format Code: ", packet.format_code)
+    
+if __name__ == "__main__":
+    port = 12345
+    parser = twse_udp_resolver.Parser()
+    parser.start_loop(port, handle_packet)
+    parser.end_loop()
 ```
 
-Refer to our [example]().
+Refer to our [example](./example/twse_udp_resolver_python_interface.py).
 
 ---
 
@@ -45,6 +57,8 @@ int main() {
     return 0;
 }
 ```
+
+Refer to our [example](./example/twse_udp_resolver_cpp_interface.cpp).
 
 ---
 
@@ -106,4 +120,26 @@ Run the cpp example with benchmark mode.
 
 ### Run the python example
 
-Not implemented yet.
+Same as the cpp example.
+
+```bash
+python3 example/twse_udp_resolver_python_interface.py
+```
+
+Run the python example with multicast mode.
+
+```bash
+python3 example/twse_udp_resolver_python_interface.py -multicast 224.0.100.100 -iface 192.168.205.30
+```
+
+Run the python example with stock filter mode.
+
+```bash
+python3 example/twse_udp_resolver_python_interface.py -stock 2330
+```
+
+Run the python example with benchmark mode.
+
+```bash
+python3 example/twse_udp_resolver_python_interface.py -mode benchmark
+```

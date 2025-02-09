@@ -5,7 +5,14 @@
 #include <sstream>
 
 // Constructor
-Parser::Parser() : running(false), use_multicast(false) {}
+Parser::Parser() : running(false), use_multicast(false) {
+    // Initialize logger with timestamp in filename
+    time_t now = time(nullptr);
+    char timestamp[32];
+    strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", localtime(&now));
+    std::string log_filename = "parser_" + std::string(timestamp) + ".log";
+    Logger::getInstance().init(log_filename);
+}
 
 // Destructor
 Parser::~Parser() {
@@ -30,18 +37,18 @@ void Parser::end_loop() {
 
     running = false;
     if (recv_thread.joinable()) {
+        if (sockfd != -1) {
+            shutdown(sockfd, SHUT_RDWR);
+            close(sockfd);
+        }
         recv_thread.join();
     }
 }
 
 // Receive UDP packets and feed them into the parser
 void Parser::receive_loop(int port) {
-    int sockfd;
-    sockaddr_in server_addr{};
-    char buffer[1500]; // Maximum UDP packet size
-
-    // Create a UDP socket
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
         log_message("Socket creation failed: " + std::string(strerror(errno)), true);
         return;
     }
@@ -54,6 +61,7 @@ void Parser::receive_loop(int port) {
         return;
     }
 
+    sockaddr_in server_addr{};
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -100,6 +108,8 @@ void Parser::receive_loop(int port) {
     }
     log_message(init_ss.str());
 
+    char buffer[1500]; // Maximum UDP packet size
+
     while (running) {
         ssize_t len = recv(sockfd, buffer, sizeof(buffer), 0);
         if (len > 0) {
@@ -122,11 +132,12 @@ void Parser::receive_loop(int port) {
                 }
             }
         } else if (len < 0) {
-            log_message("Error receiving data: " + std::string(strerror(errno)), true);
+            if (errno != EINTR && errno != EBADF) {  // ignore EINTR and EBADF
+                log_message("Error receiving data: " + std::string(strerror(errno)), true);
+            }
+            break;
         }
     }
-
-    close(sockfd);
 }
 
 // Add a new method to configure multicast
@@ -140,6 +151,12 @@ void Parser::set_multicast(const std::string& group, const std::string& iface) {
 void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     if (raw_packet.empty() || raw_packet[0] != ESC_CODE) {
         log_message("Invalid packet");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore packets that don't start with ESC-CODE
     }
 
@@ -149,18 +166,36 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     // Parse the header
     if (!parse_header(raw_packet, packet, offset)) {
         log_message("Invalid header");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore invalid packets
     }
 
     // Parse the body
     if (!parse_body(raw_packet, packet, offset)) {
         log_message("Invalid body");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore invalid packets
     }
 
     // Validate the checksum
     if (!validate_checksum(raw_packet, packet)) {
         log_message("Invalid checksum");
+        // log raw_packet
+        std::stringstream ss;
+        for (auto byte : raw_packet) {
+            ss << std::hex << static_cast<int>(byte) << " ";
+        }
+        log_message(ss.str());
         return; // Ignore invalid packets
     }
 
@@ -267,5 +302,5 @@ size_t Parser::calculate_checksum_position(size_t packet_length) const {
 
 // Add logging function
 void Parser::log_message(const std::string& message, bool error) {
-    Logger::getInstance().log(message, "", error);
+    Logger::getInstance().log(message, error);
 }

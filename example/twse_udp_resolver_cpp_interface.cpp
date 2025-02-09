@@ -9,15 +9,15 @@
 #include <atomic>
 
 // Helper function to print price and quantity in hex
-void print_price_quantity(const std::string& label, uint32_t price, uint32_t quantity, const std::string& stock_code) {
+void print_price_quantity(const std::string& label, uint32_t price, uint32_t quantity) {
     std::stringstream ss;
     ss << label << ": Price = 0x" << std::hex << price
        << ", Quantity = 0x" << quantity << std::dec;
-    Logger::getInstance().log(ss.str(), stock_code);
+    Logger::getInstance().log(ss.str());
 }
 
 // Analyze the packet
-void analyze_packet(const Packet& packet, const std::string& stock_code) {
+void analyze_packet(const Packet& packet) {
     // Check if the packet offers deal price/quantity
     std::stringstream ss;
     
@@ -34,14 +34,14 @@ void analyze_packet(const Packet& packet, const std::string& stock_code) {
     ss << "Deal Price/Quantity: " << (has_deal_price_quantity ? "Yes" : "No") << "\n"
        << "Bids: " << (has_bids ? "Yes" : "No") << " (" << static_cast<int>(bid_count) << " levels)\n"
        << "Asks: " << (has_asks ? "Yes" : "No") << " (" << static_cast<int>(ask_count) << " levels)";
-    Logger::getInstance().log(ss.str(), stock_code);
+    Logger::getInstance().log(ss.str());
 
     // Extract deal price and quantity
     size_t offset = 0;
     if (has_deal_price_quantity) {
         uint32_t deal_price = packet.prices[offset];
         uint32_t deal_quantity = packet.quantities[offset];
-        print_price_quantity("Deal", deal_price, deal_quantity, stock_code);
+        print_price_quantity("Deal", deal_price, deal_quantity);
         offset++;
     }
 
@@ -49,7 +49,7 @@ void analyze_packet(const Packet& packet, const std::string& stock_code) {
     for (uint8_t i = 0; i < bid_count; ++i) {
         uint32_t bid_price = packet.prices[offset];
         uint32_t bid_quantity = packet.quantities[offset];
-        print_price_quantity("Bid " + std::to_string(i + 1), bid_price, bid_quantity, stock_code);
+        print_price_quantity("Bid " + std::to_string(i + 1), bid_price, bid_quantity);
         offset++;
     }
 
@@ -57,7 +57,7 @@ void analyze_packet(const Packet& packet, const std::string& stock_code) {
     for (uint8_t i = 0; i < ask_count; ++i) {
         uint32_t ask_price = packet.prices[offset];
         uint32_t ask_quantity = packet.quantities[offset];
-        print_price_quantity("Ask " + std::to_string(i + 1), ask_price, ask_quantity, stock_code);
+        print_price_quantity("Ask " + std::to_string(i + 1), ask_price, ask_quantity);
         offset++;
     }
 
@@ -68,28 +68,33 @@ void analyze_packet(const Packet& packet, const std::string& stock_code) {
         uint32_t best_ask = packet.prices[has_deal_price_quantity ? 1 + bid_count : bid_count]; // First ask price
 
         if (deal_price == best_bid) {
-            Logger::getInstance().log("Deal price is at bid", stock_code);
+            Logger::getInstance().log("Deal price is at bid");
         } else if (deal_price == best_ask) {
-            Logger::getInstance().log("Deal price is at ask", stock_code);
+            Logger::getInstance().log("Deal price is at ask");
         } else {
-            Logger::getInstance().log("Deal price is neither at bid nor ask", stock_code);
+            Logger::getInstance().log("Deal price is neither at bid nor ask");
         }
     } else {
-        Logger::getInstance().log("Not enough information to determine deal price position", stock_code);
+        Logger::getInstance().log("Not enough information to determine deal price position");
     }
-
-    Logger::getInstance().log("Stock code is " + stock_code, stock_code);
 }
 
 // Callback function to handle received packets
-void handle_packet(const Packet& packet, const std::string& mode) {
+void handle_packet(const Packet& packet, const std::string& mode, const std::string& logger_stock) {
     std::string stock_code(packet.stock_code, 6);
     std::stringstream ss;
+
+    // Check if logger_stock is set
+    if (!logger_stock.empty()) {
+        if (stock_code != logger_stock) {
+            return;
+        }
+    }
 
     if (mode == "benchmark") {
         // benchmark mode
         ss << "Match Time: " <<  std::hex << packet.match_time;
-        Logger::getInstance().log(ss.str(), stock_code);
+        Logger::getInstance().log(ss.str());
         return;
     }
     
@@ -106,7 +111,7 @@ void handle_packet(const Packet& packet, const std::string& mode) {
        << "Status Note: " << static_cast<int>(packet.status_note) << "\n"
        << "Cumulative Volume: " << packet.cumulative_volume;
     
-    Logger::getInstance().log(ss.str(), stock_code);
+    Logger::getInstance().log(ss.str());
 
     // Print prices and quantities
     for (size_t i = 0; i < packet.prices.size(); ++i) {
@@ -117,29 +122,25 @@ void handle_packet(const Packet& packet, const std::string& mode) {
         } else {
             price_ss << "N/A";
         }
-        Logger::getInstance().log(price_ss.str(), stock_code);
+        Logger::getInstance().log(price_ss.str());
     }
 
     std::stringstream checksum_ss;
     checksum_ss << "Checksum: " << static_cast<int>(packet.checksum);
-    Logger::getInstance().log(checksum_ss.str(), stock_code);
+    Logger::getInstance().log(checksum_ss.str());
 
     std::stringstream terminal_ss;
     terminal_ss << "Terminal Code: 0x" << std::hex << packet.terminal_code << std::dec;
-    Logger::getInstance().log(terminal_ss.str(), stock_code);
+    Logger::getInstance().log(terminal_ss.str());
 
-    Logger::getInstance().log("=== Analyzed Packet ===", stock_code);
-    analyze_packet(packet, stock_code); // Analyze the packet
-    Logger::getInstance().log("========================", stock_code);
+    Logger::getInstance().log("=== Analyzed Packet ===");
+    analyze_packet(packet); // Analyze the packet
+    Logger::getInstance().log("========================");
 }
 
 int main(int argc, char* argv[]) {
-    // Initialize logger with timestamp in filename
-    time_t now = time(nullptr);
-    char timestamp[32];
-    strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", localtime(&now));
-    std::string log_filename = "parser_" + std::string(timestamp) + ".log";
-    Logger::getInstance().init(log_filename);
+    // Create a parser instance
+    Parser parser;
 
     const int port = 10000;
     std::string multicast_group;
@@ -156,14 +157,12 @@ int main(int argc, char* argv[]) {
             interface_ip = argv[++i];
         } else if (arg == "-stock" && i + 1 < argc) {
             logger_stock = argv[++i];
-            Logger::getInstance().setStockFilter(logger_stock);
+            logger_stock.resize(6, ' ');
         } else if (arg == "-mode" && i + 1 < argc) {
             mode = argv[++i];
         }
     }
 
-    // Create a parser instance
-    Parser parser;
 
     // Configure multicast if specified
     if (!multicast_group.empty() && !interface_ip.empty()) {
@@ -173,7 +172,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Start the parser with the callback function
-    parser.start_loop(port, [mode](const Packet& p) { handle_packet(p, mode); });
+    parser.start_loop(port, [mode, logger_stock](const Packet& p) { handle_packet(p, mode, logger_stock); });
 
     // non stop looping
     while (true) {
