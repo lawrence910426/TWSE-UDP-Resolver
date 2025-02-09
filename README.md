@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.end_loop()
 ```
 
-Refer to our [example]().
+Refer to our [example](./example/twse_udp_resolver_python_interface.py).
 
 ---
 
@@ -57,6 +57,8 @@ int main() {
     return 0;
 }
 ```
+
+Refer to our [example](./example/twse_udp_resolver_cpp_interface.cpp).
 
 ---
 
