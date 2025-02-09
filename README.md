@@ -6,6 +6,13 @@ Among all packet formats, only **Format 6** is transmitted in real-time. Other f
 
 ---
 
+## Prerequisites and dependencies
+```
+sudo apt install python3 python3-pip python3-dev build-essential -y 
+```
+
+---
+
 ## Build and Install
 ```
 git clone https://github.com/lawrence910426/TWSE-UDP-Resolver.git
