@@ -10,6 +10,9 @@ Among all packet formats, only **Format 6** is transmitted in real-time. Other f
 ```
 git clone https://github.com/lawrence910426/TWSE-UDP-Resolver.git
 git pull --recurse-submodules && git submodule update --init --recursive
+cd TWSE-UDP-Resolver
+python3 -m venv virtual
+source virtual/bin/activate
 pip install .
 ```
 
@@ -120,7 +123,7 @@ Run the cpp example with benchmark mode.
 
 ### Run the python example
 
-Same as the cpp example.
+Run the python example with testing mode.
 
 ```bash
 python3 example/twse_udp_resolver_python_interface.py
