@@ -6,7 +6,37 @@ Among all packet formats, only **Format 6** is transmitted in real-time. Other f
 
 ---
 
-## Usage
+## Build and Install
+```
+git clone https://github.com/lawrence910426/TWSE-UDP-Resolver.git
+git pull --recurse-submodules && git submodule update --init --recursive
+pip install .
+```
+
+---
+
+## Usage (Python)
+```python
+import twse_udp_resolver
+
+def handle_packet(packet):
+    print("Received packet: ")
+    print("Message Length: ", packet.message_length)
+    print("Business Type: ", packet.business_type)
+    print("Format Code: ", packet.format_code)
+    
+if __name__ == "__main__":
+    port = 12345
+    parser = twse_udp_resolver.Parser()
+    parser.start_loop(port, handle_packet)
+    parser.end_loop()
+```
+
+Refer to our [example](./example/twse_udp_resolver_python_interface.py).
+
+---
+
+## Usage (C/C++)
 
 ```cpp
 #include "parser.h"
@@ -28,18 +58,7 @@ int main() {
 }
 ```
 
----
-
-## Build
-
-This project uses **CMake** for building. It compiles `parser.h` and `parser.cc` into an object file and links it with `main.cpp` to create the final executable.
-
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build .
-```
+Refer to our [example](./example/twse_udp_resolver_cpp_interface.cpp).
 
 ---
 
@@ -72,26 +91,55 @@ This script runs the test suite, where `TWSE_mocker.py` sends several example pa
 
 You should see the parser process and handle the packets sent by the mocker during the test.
 
-### Run main parser
+### Run the cpp example
 
-Run the main parser with testing mode.
+Run the cpp example with testing mode.
+
 ```bash
 cd build
-./main
+./twse_udp_resolver_cpp_interface
 ```
-Run the main parser with multicast mode.
+
+Run the cpp example with multicast mode.
+
 ```bash
-./main -multicast 224.0.100.100 -iface 192.168.205.30
+./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
 ```
-Run the main parser with stock filter mode.
+
+Run the cpp example with stock filter mode.
+
 ```bash
-./main -stock 2330
+./twse_udp_resolver_cpp_interface -stock 2330
 ```
-Run the main parser with benchmark mode.
+
+Run the cpp example with benchmark mode.
+
 ```bash
-./main -mode benchmark
+./twse_udp_resolver_cpp_interface -mode benchmark
 ```
-Rebuild if necessary.
+
+### Run the python example
+
+Same as the cpp example.
+
 ```bash
-cmake --build .
+python3 example/twse_udp_resolver_python_interface.py
+```
+
+Run the python example with multicast mode.
+
+```bash
+python3 example/twse_udp_resolver_python_interface.py -multicast 224.0.100.100 -iface 192.168.205.30
+```
+
+Run the python example with stock filter mode.
+
+```bash
+python3 example/twse_udp_resolver_python_interface.py -stock 2330
+```
+
+Run the python example with benchmark mode.
+
+```bash
+python3 example/twse_udp_resolver_python_interface.py -mode benchmark
 ```
