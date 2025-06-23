@@ -154,8 +154,3 @@ Run the python example with benchmark mode.
 python3 example/twse_udp_resolver_python_interface.py -mode benchmark
 ```
 
----
-
-## Static Library (`libparser_static.a`)
-
-After installing the package with `pip install .`, you can find the `libparser_static.a` static library in the `build/` directory.
