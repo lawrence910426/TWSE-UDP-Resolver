@@ -59,9 +59,3 @@ elseif(MSVC)
     set(PARSER_A ${CMAKE_BINARY_DIR}/parser_static.lib)
 endif()
 
-# Create a custom target that copies both files after parser_static is built.
-add_custom_command(TARGET parser_static POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${PARSER_OBJ} ${CMAKE_SOURCE_DIR}/build/
-    COMMAND ${CMAKE_COMMAND} -E copy ${PARSER_A} ${CMAKE_SOURCE_DIR}/build/
-    COMMENT "Copying parser.o and parser.a to the build directory"
-)
