@@ -27,6 +27,15 @@ time_of_next_flush = time.time() + flush_interval
 output_file = 'packets.parquet'
 filter_regex = None  # Compiled regex for stock filter
 
+# Helper: convert PACK BCD integer to normal integer
+def bcd_to_int(value, num_bytes):
+    """Convert PACK BCD stored in an integer into a normal integer, given its byte-length."""
+    digits = []
+    for pos in range(num_bytes * 2):
+        shift = (num_bytes * 2 - 1 - pos) * 4
+        digits.append(str((value >> shift) & 0xF))
+    return int(''.join(digits))
+
 # Function to flush buffer to Parquet (overwrite same file)
 def flush_to_parquet():
     with buffer_lock:
@@ -35,7 +44,7 @@ def flush_to_parquet():
         return
     df = pd.DataFrame(data)
     df.to_parquet(output_file, index=False)
-    logging.info(f"Overwrote {output_file} with {len(data)} total packets")
+    logging.info(f"Overwrote {output_file} with {len(data)} total rows")
 
 # Packet handler builds structured fields, applies regex filter
 def handle_packet(packet):
@@ -49,20 +58,20 @@ def handle_packet(packet):
         if filter_regex and not filter_regex.search(stock_code):
             return
 
-        # Build record
+        # Build record with BCD fields parsed
         record = {
             'timestamp': datetime.now(),
-            'message_length': packet.message_length,
+            'message_length': bcd_to_int(packet.message_length, 2),
             'business_type': packet.business_type,
             'format_code': packet.format_code,
             'format_version': packet.format_version,
-            'transmission_number': packet.transmission_number,
+            'transmission_number': bcd_to_int(packet.transmission_number, 4),
             'stock_code': stock_code,
-            'match_time': packet.match_time,
+            'match_time': bcd_to_int(packet.match_time, 6),
             'display_item': packet.display_item,
             'limit_up_limit_down': packet.limit_up_limit_down,
             'status_note': packet.status_note,
-            'cumulative_volume': packet.cumulative_volume,
+            'cumulative_volume': bcd_to_int(packet.cumulative_volume, 4),
             'checksum': packet.checksum,
             'terminal_code': packet.terminal_code
         }
@@ -73,22 +82,25 @@ def handle_packet(packet):
         ask_count = (packet.display_item & 0b00001110) >> 1
         offset = 0
 
+        # Deal price & volume
         if has_deal:
-            record['deal_price'] = packet.prices[offset]
-            record['deal_volume'] = packet.quantities[offset]
+            record['deal_price']  = bcd_to_int(packet.prices[offset], 5) / 10000
+            record['deal_volume'] = bcd_to_int(packet.quantities[offset], 4)
             offset += 1
         else:
-            record['deal_price'] = None
+            record['deal_price']  = None
             record['deal_volume'] = None
 
+        # Bid price/volume levels
         for i in range(1, bid_count + 1):
-            record[f'bid_price_{i}'] = packet.prices[offset]
-            record[f'bid_volume_{i}'] = packet.quantities[offset]
+            record[f'bid_price_{i}']  = bcd_to_int(packet.prices[offset], 5) / 10000
+            record[f'bid_volume_{i}'] = bcd_to_int(packet.quantities[offset], 4)
             offset += 1
 
+        # Ask price/volume levels
         for j in range(1, ask_count + 1):
-            record[f'ask_price_{j}'] = packet.prices[offset]
-            record[f'ask_volume_{j}'] = packet.quantities[offset]
+            record[f'ask_price_{j}']  = bcd_to_int(packet.prices[offset], 5) / 10000
+            record[f'ask_volume_{j}'] = bcd_to_int(packet.quantities[offset], 4)
             offset += 1
 
         # Append record under lock
@@ -107,18 +119,20 @@ def parse_arguments():
     parser.add_argument('-iface', type=str, help='Interface IP address')
     parser.add_argument('-s', '--stock', type=str,
                         help='Regex to filter stock codes')
-    parser.add_argument('-o', '--output', type=str, default='packets',
-                        help='Output filename prefix (default: packets)')
+    parser.add_argument('-o', '--output', type=str, default='packets.parquet',
+                        help='Output filename prefix (default: packets.parquet)')
+    parser.add_argument('-p', '--port', type=int, default=10000,
+                        help='UDP port number (default: 10000)')
     return parser.parse_args()
 
 # Main execution
 if __name__ == "__main__":
     try:
         args = parse_arguments()
-        port = 10000
+        port = args.port
 
         # Setup output file
-        output_file = f"{args.output.strip()}.parquet"
+        output_file = f"{args.output.strip()}"
 
         # Compile stock regex if provided
         if args.stock:
