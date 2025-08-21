@@ -1,6 +1,9 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+// define DEBUG to enable debug logging
+// #define DEBUG
+
 #include <thread>
 #include <functional>
 #include <string>

@@ -302,5 +302,7 @@ size_t Parser::calculate_checksum_position(size_t packet_length) const {
 
 // Add logging function
 void Parser::log_message(const std::string& message, bool error) {
+#ifdef DEBUG
     Logger::getInstance().log(message, error);
+#endif
 }
