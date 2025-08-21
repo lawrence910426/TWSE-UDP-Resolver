@@ -98,10 +98,6 @@ void handle_packet(const Packet& packet, const std::string& mode, const std::str
         return;
     }
 
-    ss << "Format Code: " << static_cast<int>(packet.format_code) << "\n";
-    Logger::getInstance().log(ss.str());
-    return;
-    
     ss << "Received Packet:\n"
        << "Message Length: " << std::hex << packet.message_length << "\n"
        << "Business Type: " << static_cast<int>(packet.business_type) << "\n"
