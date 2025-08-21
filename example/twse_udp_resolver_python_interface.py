@@ -134,6 +134,7 @@ def parse_arguments():
     parser.add_argument('-stock', type=str, help='Stock code filter')
     parser.add_argument('-port', type=int, help='Port number')
     parser.add_argument('-mode', type=str, help='Operation mode')
+    parser.add_argument('-format-codes', nargs='+', type=int, help='List of allowed format codes')
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -145,6 +146,11 @@ if __name__ == "__main__":
         
         parser = twse_udp_resolver.Parser()
         
+        # Configure allowed format codes if specified
+        if args.format_codes:
+            parser.set_allowed_format_codes(args.format_codes)
+            logging.info(f"Configured allowed format codes: {args.format_codes}")
+
         # Configure multicast if specified
         if args.multicast and args.iface:
             parser.set_multicast(args.multicast, args.iface)
