@@ -132,13 +132,14 @@ def parse_arguments():
     parser.add_argument('-multicast', type=str, help='Multicast group address')
     parser.add_argument('-iface', type=str, help='Interface IP address')
     parser.add_argument('-stock', type=str, help='Stock code filter')
+    parser.add_argument('-port', type=int, help='Port number')
     parser.add_argument('-mode', type=str, help='Operation mode')
     return parser.parse_args()
 
 if __name__ == "__main__":
     try:
         args = parse_arguments()
-        port = 10000
+        port = args.port if args.port else 10000
         mode = args.mode if args.mode else "normal"
         stock = args.stock.ljust(6, ' ') if args.stock else None
         
