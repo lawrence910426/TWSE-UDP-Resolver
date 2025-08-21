@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
     // Create a parser instance
     Parser parser;
 
-    const int port = 10000;
+    int port = 10000;
     std::string multicast_group;
     std::string interface_ip;
     std::string logger_stock;
@@ -153,6 +153,8 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "-multicast" && i + 1 < argc) {
             multicast_group = argv[++i];
+        } else if (arg == "-port" && i + 1 < argc) {
+            port = std::stoi(argv[++i]);
         } else if (arg == "-iface" && i + 1 < argc) {
             interface_ip = argv[++i];
         } else if (arg == "-stock" && i + 1 < argc) {

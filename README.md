@@ -113,7 +113,7 @@ cd build
 Run the cpp example with multicast mode.
 
 ```bash
-./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
+./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30 -port 10000
 ```
 
 Run the cpp example with stock filter mode.
