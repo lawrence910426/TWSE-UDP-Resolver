@@ -5,6 +5,20 @@
 
 namespace py = pybind11;
 
+template<size_t N>
+auto set_char_array(char (Packet::*pm)[N]) {
+    return [pm](Packet &p, const std::string &value) {
+        if (value.length() <= N) {
+            std::memcpy(p.*pm, value.c_str(), value.length());
+            if (value.length() < N) {
+                std::memset((p.*pm) + value.length(), 0, N - value.length());
+            }
+        } else {
+            throw std::runtime_error("String is too long for char array assignment!");
+        }
+    };
+}
+
 PYBIND11_MODULE(twse_udp_resolver, m) {
     m.doc() = "TWSE UDP Resolver (Python interface)"; // optional module docstring
 
@@ -28,6 +42,14 @@ PYBIND11_MODULE(twse_udp_resolver, m) {
         .def_readwrite("cumulative_volume", &Packet::cumulative_volume)
         .def_readwrite("prices", &Packet::prices)
         .def_readwrite("quantities", &Packet::quantities)
+        .def_property("warrant_A", [](const Packet &p) { return py::bytes(p.warrant_A, 16); }, set_char_array<16>(&Packet::warrant_A))
+        .def_property("separator", [](const Packet &p) { return py::bytes(p.separator, 2); }, set_char_array<2>(&Packet::separator))
+        .def_property("warrant_B", [](const Packet &p) { return py::bytes(p.warrant_B, 16); }, set_char_array<16>(&Packet::warrant_B))
+        .def_property("warrant_C", [](const Packet &p) { return py::bytes(p.warrant_C, 8); }, set_char_array<8>(&Packet::warrant_C))
+        .def_property("warrant_D", [](const Packet &p) { return py::bytes(p.warrant_D, 2); }, set_char_array<2>(&Packet::warrant_D))
+        .def_property("warrant_E", [](const Packet &p) { return py::bytes(p.warrant_E, 2); }, set_char_array<2>(&Packet::warrant_E))
+        .def_property("warrant_F", [](const Packet &p) { return py::bytes(p.warrant_F, 2); }, set_char_array<2>(&Packet::warrant_F))
+        .def_property("warrant_G", [](const Packet &p) { return py::bytes(p.warrant_G, 2); }, set_char_array<2>(&Packet::warrant_G))
         .def_readwrite("checksum", &Packet::checksum)
         .def_readwrite("terminal_code", &Packet::terminal_code);
 

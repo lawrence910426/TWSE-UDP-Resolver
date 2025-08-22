@@ -204,16 +204,16 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
         return; // Ignore invalid packets
     }
 
-    // Parse the body
-    if (!parse_body(raw_packet, packet, offset)) {
-        log_message("Invalid body");
-        // log raw_packet
-        std::stringstream ss;
-        for (auto byte : raw_packet) {
-            ss << std::hex << static_cast<int>(byte) << " ";
+    if (packet.format_code == 0x06) {
+        if (!parse_body_06(raw_packet, packet, offset)) {
+            log_message("Invalid body for format code 0x06");
+            return;
         }
-        log_message(ss.str());
-        return; // Ignore invalid packets
+    } else if (packet.format_code == 0x14) {
+        if (!parse_body_14(raw_packet, packet, offset)) {
+            log_message("Invalid body for format code 0x14");
+            return;
+        }
     }
 
     // Validate the checksum
@@ -266,8 +266,8 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
     return true;
 }
 
-// Parse the body
-bool Parser::parse_body(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
+// Parse the body for format code 0x06
+bool Parser::parse_body_06(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
     if (offset + 19 > raw_packet.size()) return false; // Minimum body size is 19 bytes
 
     std::memcpy(packet.stock_code, &raw_packet[offset], 6);
@@ -307,6 +307,35 @@ bool Parser::parse_body(const std::vector<uint8_t>& raw_packet, Packet& packet, 
         packet.quantities.push_back(quantity);
         offset += 4;
     }
+
+    return true;
+}
+
+// Parse the body for format code 0x14
+bool Parser::parse_body_14(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
+    const size_t body_length = 56;
+
+    if (offset + body_length > raw_packet.size()) return false;
+
+    std::memcpy(packet.stock_code, &raw_packet[offset], 6);
+    offset += 6;
+
+    std::memcpy(packet.warrant_A, &raw_packet[offset], 16);
+    offset += 16;
+    std::memcpy(packet.separator, &raw_packet[offset], 2);
+    offset += 2;
+    std::memcpy(packet.warrant_B, &raw_packet[offset], 16);
+    offset += 16;
+    std::memcpy(packet.warrant_C, &raw_packet[offset], 8);
+    offset += 8;
+    std::memcpy(packet.warrant_D, &raw_packet[offset], 2);
+    offset += 2;
+    std::memcpy(packet.warrant_E, &raw_packet[offset], 2);
+    offset += 2;
+    std::memcpy(packet.warrant_F, &raw_packet[offset], 2);
+    offset += 2;
+    std::memcpy(packet.warrant_G, &raw_packet[offset], 2);
+    offset += 2;
 
     return true;
 }

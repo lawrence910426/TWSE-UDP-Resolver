@@ -68,7 +68,7 @@ def analyze_packet(packet):
     else:
         logging.info("Not enough information to determine deal price position")
 
-def handle_packet(packet, mode, logger_stock):
+def handle_packet_06(packet, mode, logger_stock):
     try:
         # Check if packet is None
         if packet is None:
@@ -127,6 +127,34 @@ def handle_packet(packet, mode, logger_stock):
         import traceback
         logging.error(traceback.format_exc())
 
+def handle_packet_14(packet, mode, logger_stock):
+    if packet.format_code != 0x14:
+        return
+        
+    try:
+        warrant_A = packet.warrant_A.rstrip(b'\x00').decode('big5', errors='replace')
+        separator = packet.separator.rstrip(b'\x00').decode('ascii', errors='replace')
+        warrant_B = packet.warrant_B.rstrip(b'\x00').decode('big5', errors='replace')
+        warrant_C = packet.warrant_C.rstrip(b'\x00').decode('ascii', errors='replace')
+        warrant_D = packet.warrant_D.rstrip(b'\x00').decode('big5', errors='replace')
+        warrant_E = packet.warrant_E.rstrip(b'\x00').decode('big5', errors='replace')
+        warrant_F = packet.warrant_F.rstrip(b'\x00').decode('big5', errors='replace')
+        warrant_G = packet.warrant_G.rstrip(b'\x00').decode('ascii', errors='replace') # Reserved, likely ASCII or empty
+
+        logging.info("--- Warrant Details (Format 14) ---")
+        logging.info(f"  A. 權證簡稱: {warrant_A}")
+        logging.info(f"     區隔字元: {separator}")
+        logging.info(f"  B. 權證標的: {warrant_B}")
+        logging.info(f"  C. 到期日: {warrant_C}")
+        logging.info(f"  D. 權證形式: {warrant_D}")
+        logging.info(f"  E. 權證種類: {warrant_E}")
+        logging.info(f"  F. 權證類型: {warrant_F}")
+        logging.info(f"  G. 保留欄位: {warrant_G}")
+        logging.info("------------------------------------")
+
+    except Exception as e:
+        logging.error(f"Error decoding warrant data: {e}")
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='TWSE UDP Resolver Python Interface')
     parser.add_argument('-multicast', type=str, help='Multicast group address')
@@ -157,7 +185,7 @@ if __name__ == "__main__":
             logging.info(f"Configured multicast: group={args.multicast}, interface={args.iface}")
         
         # Create a partial function with mode and stock parameters
-        packet_handler = partial(handle_packet, mode=mode, logger_stock=stock)
+        packet_handler = partial(handle_packet_14, mode=mode, logger_stock=stock)
         
         # Start the parser with the partial function
         logging.info(f"Starting parser on port {port}")

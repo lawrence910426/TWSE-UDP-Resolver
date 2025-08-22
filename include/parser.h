@@ -31,7 +31,7 @@ struct Packet {
     uint8_t format_version;       // 1 byte, PACK BCD "04"
     uint32_t transmission_number; // 4 bytes, PACK BCD
 
-    // BODY
+    // BODY for format code 0x06
     char stock_code[6];           // 6 bytes, ASCII
     uint64_t match_time;          // 6 bytes, PACK BCD
     uint8_t display_item;         // 1 byte, BIT MAP
@@ -40,6 +40,16 @@ struct Packet {
     uint32_t cumulative_volume;   // 4 bytes, PACK BCD
     std::vector<uint32_t> prices; // Prices (each 5 bytes, PACK BCD)
     std::vector<uint32_t> quantities; // Quantities (each 4 bytes, PACK BCD)
+
+    // BODY for format code 0x14
+    char warrant_A[16];      // A. warrant brief name
+    char separator[2];       // Separator
+    char warrant_B[16];      // B. warrant target
+    char warrant_C[8];       // C. expiration date
+    char warrant_D[2];       // D. warrant typeD
+    char warrant_E[2];       // E. warrant typeE
+    char warrant_F[2];       // F. warrant typeF
+    char warrant_G[2];       // G. reserved field
 
     // CHECKSUM
     uint8_t checksum; // 1 byte, XOR of all bytes from ESC-CODE to the byte before TERMINAL-CODE
@@ -74,7 +84,8 @@ private:
 
     // Helper methods for parsing
     bool parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
-    bool parse_body(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
+    bool parse_body_06(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
+    bool parse_body_14(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     bool validate_checksum(const std::vector<uint8_t>& raw_packet, const Packet& packet);
     bool validate_terminal_code(const std::vector<uint8_t>& raw_packet, const Packet& packet);
 
