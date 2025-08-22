@@ -31,7 +31,7 @@ struct Packet {
     uint8_t format_version;       // 1 byte, PACK BCD "04"
     uint32_t transmission_number; // 4 bytes, PACK BCD
 
-    // BODY for format code 0x06
+    // BODY for format code 0x06, 0x17
     char stock_code[6];           // 6 bytes, ASCII
     uint64_t match_time;          // 6 bytes, PACK BCD
     uint8_t display_item;         // 1 byte, BIT MAP
@@ -84,7 +84,9 @@ private:
 
     // Helper methods for parsing
     bool parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
+    // BODY for format code 0x06, 0x17
     bool parse_body_06(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
+    // BODY for format code 0x14
     bool parse_body_14(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     bool validate_checksum(const std::vector<uint8_t>& raw_packet, const Packet& packet);
     bool validate_terminal_code(const std::vector<uint8_t>& raw_packet, const Packet& packet);

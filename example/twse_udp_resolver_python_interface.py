@@ -26,31 +26,31 @@ def analyze_packet(packet):
     # Check if the packet offers asks
     ask_count = (packet.display_item & 0b00001110) >> 1
     has_asks = ask_count > 0
-    
-    logging.info(f"Deal Price/Quantity: {'Yes' if has_deal_price_quantity else 'No'}")
-    logging.info(f"Bids: {'Yes' if has_bids else 'No'} ({bid_count} levels)")
-    logging.info(f"Asks: {'Yes' if has_asks else 'No'} ({ask_count} levels)")
+
+    message = f"Deal Price/Quantity: {'Yes' if has_deal_price_quantity else 'No'}\n"
+    message += f"Bids: {'Yes' if has_bids else 'No'} ({bid_count} levels)\n"
+    message += f"Asks: {'Yes' if has_asks else 'No'} ({ask_count} levels)\n"
     
     # Extract deal price and quantity
     offset = 0
     if has_deal_price_quantity:
         deal_price = packet.prices[offset]
         deal_quantity = packet.quantities[offset]
-        logging.info(f"Deal: Price = 0x{deal_price:x}, Quantity = 0x{deal_quantity:x}")
+        message += f"Deal: Price = 0x{deal_price:x}, Quantity = 0x{deal_quantity:x}\n"
         offset += 1
     
     # Extract bid prices and quantities
     for i in range(bid_count):
         bid_price = packet.prices[offset]
         bid_quantity = packet.quantities[offset]
-        logging.info(f"Bid {i + 1}: Price = 0x{bid_price:x}, Quantity = 0x{bid_quantity:x}")
+        message += f"Bid {i + 1}: Price = 0x{bid_price:x}, Quantity = 0x{bid_quantity:x}\n"
         offset += 1
     
     # Extract ask prices and quantities
     for i in range(ask_count):
         ask_price = packet.prices[offset]
         ask_quantity = packet.quantities[offset]
-        logging.info(f"Ask {i + 1}: Price = 0x{ask_price:x}, Quantity = 0x{ask_quantity:x}")
+        message += f"Ask {i + 1}: Price = 0x{ask_price:x}, Quantity = 0x{ask_quantity:x}\n"
         offset += 1
     
     # Check if deal price is at bid or ask
@@ -60,14 +60,17 @@ def analyze_packet(packet):
         best_ask = packet.prices[1 + bid_count if has_deal_price_quantity else bid_count]  # First ask
         
         if deal_price == best_bid:
-            logging.info("Deal price is at bid")
+            message += "Deal price is at bid\n"
         elif deal_price == best_ask:
-            logging.info("Deal price is at ask")
+            message += "Deal price is at ask\n"
         else:
-            logging.info("Deal price is neither at bid nor ask")
+            message += "Deal price is neither at bid nor ask\n"
     else:
-        logging.info("Not enough information to determine deal price position")
+        message += "Not enough information to determine deal price position\n"
+    
+    return message
 
+# Format code 0x06, 0x17
 def handle_packet_06(packet, mode, logger_stock):
     try:
         # Check if packet is None
@@ -98,8 +101,7 @@ def handle_packet_06(packet, mode, logger_stock):
         message += f"Display Item: {packet.display_item:x}\n"
         message += f"Limit Up Limit Down: {packet.limit_up_limit_down:x}\n"
         message += f"Status Note: {packet.status_note:x}\n"
-        message += f"Cumulative Volume: {packet.cumulative_volume:x}"
-        logging.info(message)
+        message += f"Cumulative Volume: {packet.cumulative_volume:x}\n"
         
         
         # Print prices and quantities
@@ -109,18 +111,21 @@ def handle_packet_06(packet, mode, logger_stock):
                 price_ss += str(packet.quantities[i])
             else:
                 price_ss += "N/A"
-            logging.info(price_ss)
+            message += price_ss + "\n"
 
 
         checksum_ss = f"Checksum: {packet.checksum}"
-        logging.info(checksum_ss)
+        message += checksum_ss + "\n"
 
         terminal_ss = f"Terminal Code: 0x{packet.terminal_code:x}"
-        logging.info(terminal_ss)
+        message += terminal_ss + "\n"
 
-        logging.info("=== Analyzed Packet ===")
-        analyze_packet(packet)
-        logging.info("========================")
+        message += "=== Analyzed Packet ===\n"
+        message += analyze_packet(packet)
+        message += "========================"
+
+        logging.info(message)
+        return
             
     except Exception as e:
         logging.error(f"Error handling packet: {str(e)}")
@@ -142,6 +147,7 @@ def handle_packet_14(packet, mode, logger_stock):
         warrant_G = packet.warrant_G.rstrip(b'\x00').decode('ascii', errors='replace') # Reserved, likely ASCII or empty
 
         logging.info("--- Warrant Details (Format 14) ---")
+        logging.info(f"  Stock Code: {packet.stock_code}")
         logging.info(f"  A. 權證簡稱: {warrant_A}")
         logging.info(f"     區隔字元: {separator}")
         logging.info(f"  B. 權證標的: {warrant_B}")
@@ -154,6 +160,21 @@ def handle_packet_14(packet, mode, logger_stock):
 
     except Exception as e:
         logging.error(f"Error decoding warrant data: {e}")
+
+def handle_packet(packet, mode, logger_stock):
+    """
+    A unified packet handler that dispatches to specific handlers based on format_code.
+    """
+    if packet is None:
+        logging.warning("Received None packet")
+        return
+    
+    if packet.format_code == 0x06 or packet.format_code == 0x17:
+        handle_packet_06(packet, mode, logger_stock)
+    elif packet.format_code == 0x14:
+        handle_packet_14(packet, mode, logger_stock)
+    else:
+        logging.warning(f"Received unhandled format code: {packet.format_code}")
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='TWSE UDP Resolver Python Interface')
@@ -185,7 +206,7 @@ if __name__ == "__main__":
             logging.info(f"Configured multicast: group={args.multicast}, interface={args.iface}")
         
         # Create a partial function with mode and stock parameters
-        packet_handler = partial(handle_packet_14, mode=mode, logger_stock=stock)
+        packet_handler = partial(handle_packet, mode=mode, logger_stock=stock)
         
         # Start the parser with the partial function
         logging.info(f"Starting parser on port {port}")

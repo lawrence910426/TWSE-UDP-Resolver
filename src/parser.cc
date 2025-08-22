@@ -204,7 +204,7 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
         return; // Ignore invalid packets
     }
 
-    if (packet.format_code == 0x06) {
+    if (packet.format_code == 0x06 || packet.format_code == 0x17) {
         if (!parse_body_06(raw_packet, packet, offset)) {
             log_message("Invalid body for format code 0x06");
             return;
@@ -266,7 +266,7 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
     return true;
 }
 
-// Parse the body for format code 0x06
+// Parse the body for format code 0x06, 0x17
 bool Parser::parse_body_06(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
     if (offset + 19 > raw_packet.size()) return false; // Minimum body size is 19 bytes
 
