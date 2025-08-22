@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sstream>
+#include <algorithm>
 
 // Constructor
 Parser::Parser() : running(false), use_multicast(false) {
@@ -147,6 +148,34 @@ void Parser::set_multicast(const std::string& group, const std::string& iface) {
     use_multicast = true;
 }
 
+int hexStringToInt(const std::string& hex_str) {
+    std::stringstream ss;
+    ss << std::hex << hex_str;
+
+    int value;
+    ss >> value;
+
+    if (ss.fail() && !ss.eof()) {
+        throw std::runtime_error("Invalid hex string: " + hex_str);
+    }
+
+    return value;
+}
+
+// Add a new method to set allowed format codes
+void Parser::set_allowed_format_codes(const std::vector<uint8_t>& codes) {
+    for (const auto& code : codes) {
+        allowed_format_codes.push_back(hexStringToInt(std::to_string(code)));
+    }
+    std::stringstream ss;
+    ss << "C++: Received allowed format codes (hex): [ ";
+    for (const auto& code : allowed_format_codes) {
+        ss << std::hex << static_cast<int>(code) << " ";
+    }
+    ss << "]";
+    log_message(ss.str());
+}
+
 // Parse the received packet
 void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     if (raw_packet.empty() || raw_packet[0] != ESC_CODE) {
@@ -225,7 +254,14 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
                                  raw_packet[offset + 8];
     offset += HEADER_LENGTH;
 
-    if (packet.format_code != 0x06) return false;
+    if (allowed_format_codes.empty()) {
+        return false;
+    }
+    
+    if (!allowed_format_codes.empty() &&
+        std::find(allowed_format_codes.begin(), allowed_format_codes.end(), packet.format_code) == allowed_format_codes.end()) {
+        return false; // Not in the allowed list, so we skip this packet
+    }
     
     return true;
 }
@@ -302,5 +338,7 @@ size_t Parser::calculate_checksum_position(size_t packet_length) const {
 
 // Add logging function
 void Parser::log_message(const std::string& message, bool error) {
+#ifdef DEBUG
     Logger::getInstance().log(message, error);
+#endif
 }

@@ -1,6 +1,9 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+// define DEBUG to enable debug logging
+// #define DEBUG
+
 #include <thread>
 #include <functional>
 #include <string>
@@ -59,6 +62,9 @@ public:
     // Configure multicast settings
     void set_multicast(const std::string& group, const std::string& iface);
     
+    // Set allowed format codes
+    void set_allowed_format_codes(const std::vector<uint8_t>& codes);
+    
 private:
     // Parsing automaton logic
     void parse_packet(const std::vector<uint8_t>& raw_packet);
@@ -96,6 +102,9 @@ private:
     std::string multicast_group;
     std::string interface_ip;
     bool use_multicast;
+
+    // Filter settings
+    std::vector<uint8_t> allowed_format_codes;
     
     int sockfd = -1;
     

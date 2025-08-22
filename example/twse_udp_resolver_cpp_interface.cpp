@@ -97,7 +97,7 @@ void handle_packet(const Packet& packet, const std::string& mode, const std::str
         Logger::getInstance().log(ss.str());
         return;
     }
-    
+
     ss << "Received Packet:\n"
        << "Message Length: " << std::hex << packet.message_length << "\n"
        << "Business Type: " << static_cast<int>(packet.business_type) << "\n"
@@ -142,17 +142,20 @@ int main(int argc, char* argv[]) {
     // Create a parser instance
     Parser parser;
 
-    const int port = 10000;
+    int port = 10000;
     std::string multicast_group;
     std::string interface_ip;
     std::string logger_stock;
     std::string mode;
+    std::vector<uint8_t> format_codes;
     
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "-multicast" && i + 1 < argc) {
             multicast_group = argv[++i];
+        } else if (arg == "-port" && i + 1 < argc) {
+            port = std::stoi(argv[++i]);
         } else if (arg == "-iface" && i + 1 < argc) {
             interface_ip = argv[++i];
         } else if (arg == "-stock" && i + 1 < argc) {
@@ -160,6 +163,14 @@ int main(int argc, char* argv[]) {
             logger_stock.resize(6, ' ');
         } else if (arg == "-mode" && i + 1 < argc) {
             mode = argv[++i];
+        } else if (arg == "-format-codes") {
+            while (i + 1 < argc && argv[i + 1][0] != '-') {
+                try {
+                    format_codes.push_back(static_cast<uint8_t>(std::stoi(argv[++i])));
+                } catch (const std::exception& e) {
+                    std::cerr << "Invalid format code: " << argv[i] << std::endl;
+                }
+            }
         }
     }
 
@@ -169,6 +180,11 @@ int main(int argc, char* argv[]) {
         Logger::getInstance().log("Configuring multicast with group: " + multicast_group + 
                                 " and interface: " + interface_ip);
         parser.set_multicast(multicast_group, interface_ip);
+    }
+
+    // Set allowed format codes if specified
+    if (!format_codes.empty()) {
+        parser.set_allowed_format_codes(format_codes);
     }
 
     // Start the parser with the callback function

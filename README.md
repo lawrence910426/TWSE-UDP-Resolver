@@ -113,7 +113,7 @@ cd build
 Run the cpp example with multicast mode.
 
 ```bash
-./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30
+./twse_udp_resolver_cpp_interface -multicast 224.0.100.100 -iface 192.168.205.30 -port 10000 -format-codes 1 17
 ```
 
 Run the cpp example with stock filter mode.
@@ -139,7 +139,7 @@ python3 example/twse_udp_resolver_python_interface.py
 Run the python example with multicast mode.
 
 ```bash
-python3 example/twse_udp_resolver_python_interface.py -multicast 224.0.100.100 -iface 192.168.205.30
+python3 example/twse_udp_resolver_python_interface.py -multicast 224.0.100.100 -iface 192.168.205.30 -port 10000 -format-codes 1 17
 ```
 
 Run the python example with stock filter mode.
