@@ -320,21 +320,21 @@ bool Parser::parse_body_14(const std::vector<uint8_t>& raw_packet, Packet& packe
     std::memcpy(packet.stock_code, &raw_packet[offset], 6);
     offset += 6;
 
-    std::memcpy(packet.warrant_A, &raw_packet[offset], 16);
+    std::memcpy(packet.warrant_brief_name, &raw_packet[offset], 16);
     offset += 16;
     std::memcpy(packet.separator, &raw_packet[offset], 2);
     offset += 2;
-    std::memcpy(packet.warrant_B, &raw_packet[offset], 16);
+    std::memcpy(packet.underlying_asset, &raw_packet[offset], 16);
     offset += 16;
-    std::memcpy(packet.warrant_C, &raw_packet[offset], 8);
+    std::memcpy(packet.expiration_date, &raw_packet[offset], 8);
     offset += 8;
-    std::memcpy(packet.warrant_D, &raw_packet[offset], 2);
+    std::memcpy(packet.warrant_type_D, &raw_packet[offset], 2);
     offset += 2;
-    std::memcpy(packet.warrant_E, &raw_packet[offset], 2);
+    std::memcpy(packet.warrant_type_E, &raw_packet[offset], 2);
     offset += 2;
-    std::memcpy(packet.warrant_F, &raw_packet[offset], 2);
+    std::memcpy(packet.warrant_type_F, &raw_packet[offset], 2);
     offset += 2;
-    std::memcpy(packet.warrant_G, &raw_packet[offset], 2);
+    std::memcpy(packet.reserved, &raw_packet[offset], 2);
     offset += 2;
 
     return true;

@@ -137,25 +137,25 @@ def handle_packet_14(packet, mode, logger_stock):
         return
         
     try:
-        warrant_A = packet.warrant_A.rstrip(b'\x00').decode('big5', errors='replace')
+        brief_name = packet.warrant_brief_name.rstrip(b'\x00').decode('big5', errors='replace')
         separator = packet.separator.rstrip(b'\x00').decode('ascii', errors='replace')
-        warrant_B = packet.warrant_B.rstrip(b'\x00').decode('big5', errors='replace')
-        warrant_C = packet.warrant_C.rstrip(b'\x00').decode('ascii', errors='replace')
-        warrant_D = packet.warrant_D.rstrip(b'\x00').decode('big5', errors='replace')
-        warrant_E = packet.warrant_E.rstrip(b'\x00').decode('big5', errors='replace')
-        warrant_F = packet.warrant_F.rstrip(b'\x00').decode('big5', errors='replace')
-        warrant_G = packet.warrant_G.rstrip(b'\x00').decode('ascii', errors='replace') # Reserved, likely ASCII or empty
+        underlying = packet.underlying_asset.rstrip(b'\x00').decode('big5', errors='replace')
+        exp_date = packet.expiration_date.rstrip(b'\x00').decode('ascii', errors='replace')
+        style = packet.warrant_type_D.rstrip(b'\x00').decode('big5', errors='replace')
+        w_type = packet.warrant_type_E.rstrip(b'\x00').decode('big5', errors='replace')
+        cat = packet.warrant_type_F.rstrip(b'\x00').decode('big5', errors='replace')
+        res = packet.reserved.rstrip(b'\x00').decode('ascii', errors='replace')
 
         logging.info("--- Warrant Details (Format 14) ---")
         logging.info(f"  Stock Code: {packet.stock_code}")
-        logging.info(f"  A. 權證簡稱: {warrant_A}")
+        logging.info(f"  A. 權證簡稱: {brief_name}")
         logging.info(f"     區隔字元: {separator}")
-        logging.info(f"  B. 權證標的: {warrant_B}")
-        logging.info(f"  C. 到期日: {warrant_C}")
-        logging.info(f"  D. 權證形式: {warrant_D}")
-        logging.info(f"  E. 權證種類: {warrant_E}")
-        logging.info(f"  F. 權證類型: {warrant_F}")
-        logging.info(f"  G. 保留欄位: {warrant_G}")
+        logging.info(f"  B. 權證標的: {underlying}")
+        logging.info(f"  C. 到期日: {exp_date}")
+        logging.info(f"  D. 權證形式: {style}")
+        logging.info(f"  E. 權證種類: {w_type}")
+        logging.info(f"  F. 權證類型: {cat}")
+        logging.info(f"  G. 保留欄位: {res}")
         logging.info("------------------------------------")
 
     except Exception as e:

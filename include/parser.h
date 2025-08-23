@@ -42,14 +42,14 @@ struct Packet {
     std::vector<uint32_t> quantities; // Quantities (each 4 bytes, PACK BCD)
 
     // BODY for format code 0x14
-    char warrant_A[16];      // A. warrant brief name
-    char separator[2];       // Separator
-    char warrant_B[16];      // B. warrant target
-    char warrant_C[8];       // C. expiration date
-    char warrant_D[2];       // D. warrant typeD
-    char warrant_E[2];       // E. warrant typeE
-    char warrant_F[2];       // F. warrant typeF
-    char warrant_G[2];       // G. reserved field
+    char warrant_brief_name[16]; // A. warrant brief name
+    char separator[2];           // separator
+    char underlying_asset[16];   // B. underlying asset
+    char expiration_date[8];     // C. expiration date
+    char warrant_type_D[2];      // D. warrant type D
+    char warrant_type_E[2];      // E. warrant type E
+    char warrant_type_F[2];      // F. warrant type F
+    char reserved[2];            // G. reserved
 
     // CHECKSUM
     uint8_t checksum; // 1 byte, XOR of all bytes from ESC-CODE to the byte before TERMINAL-CODE
