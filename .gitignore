@@ -4,3 +4,4 @@ build
 test.py
 logger
 *.log
+*.pcap
