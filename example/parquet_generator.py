@@ -69,6 +69,14 @@ buffer_lock = threading.Lock()
 output_file = 'packets.parquet'
 last_receive_packet = time.time()
 
+# Batching to cap memory (override via env BATCH_ROWS)
+BATCH_ROWS = int(os.environ.get("BATCH_ROWS", "50000"))
+
+# Streaming parquet writer (initialized lazily on first batch)
+writer = None
+writer_tmp_path = None
+writer_schema = None
+
 # Helper: convert PACK BCD integer to normal integer
 def bcd_to_int(value, num_bytes):
     """Convert PACK BCD stored in an integer into a normal integer, given its byte-length."""
@@ -94,41 +102,77 @@ def atomic_write_parquet(table, path):
         os.close(fd)
     os.replace(tmp, path)  # atomic on POSIX
 
-# Function to flush buffer to Parquet (overwrite same file)
+def _ensure_writer(schema):
+    """Create a streaming ParquetWriter to a tmp file on first use."""
+    global writer, writer_tmp_path, writer_schema
+    if writer is None:
+        writer_tmp_path = f"{output_file}.tmp"
+        writer_schema = schema
+        writer = pq.ParquetWriter(
+            writer_tmp_path,
+            schema=schema,
+            compression="zstd",
+            use_deprecated_int96_timestamps=False,
+        )
+        logging.info(f"Opened ParquetWriter: {writer_tmp_path}")
+
+def _write_batch_06():
+    """Write current 06 buffer as a row group and clear it."""
+    logging.info("Writing a batch with format 06.")
+
+    global packet_buffer_size_06
+    if packet_buffer_size_06 == 0:
+        return
+    arrays = [pa.array(packet_buffer_06[name], type=SCHEMA_06[i].type)
+              for i, name in enumerate(SCHEMA_06.names)]
+    table = pa.Table.from_arrays(arrays, names=SCHEMA_06.names)
+    _ensure_writer(SCHEMA_06)
+    writer.write_table(table)
+    for name in SCHEMA_06.names:
+        packet_buffer_06[name].clear()
+    logging.info(f"Wrote batch (format 06) rows={packet_buffer_size_06}")
+    packet_buffer_size_06 = 0
+
+def _write_batch_14():
+    """Write current 14 buffer as a row group and clear it."""
+    logging.info("Writing a batch with format 14.")
+
+    global packet_buffer_size_14
+    if packet_buffer_size_14 == 0:
+        return
+    arrays = [pa.array(packet_buffer_14[name], type=SCHEMA_14[i].type)
+              for i, name in enumerate(SCHEMA_14.names)]
+    table = pa.Table.from_arrays(arrays, names=SCHEMA_14.names)
+    _ensure_writer(SCHEMA_14)
+    writer.write_table(table)
+    for name in SCHEMA_14.names:
+        packet_buffer_14[name].clear()
+    logging.info(f"Wrote batch (format 14) rows={packet_buffer_size_14}")
+    packet_buffer_size_14 = 0
+
 def flush_to_parquet():
-    with buffer_lock:   
+    """Flush any remaining rows and finalize the parquet atomically."""
+    global writer, writer_tmp_path
+    with buffer_lock:
         if packet_buffer_size_06 > 0 and packet_buffer_size_14 > 0:
-            raise Exception("Received both foramt 06 and 14")
-        
-        if packet_buffer_size_06 == 0 and packet_buffer_size_14 == 0:
-            array = []
-            logging.info("Building empty pyarrow Table")
-            table = pa.Table.from_arrays(arrays)
-
-        if packet_buffer_size_06 > 0:  
-            logging.info(f"Building array of size = {packet_buffer_size_06}")
-            t = time.time()
-            arrays = [
-                pa.array(packet_buffer_06[name], type=SCHEMA_06[i].type) for i, name in enumerate(SCHEMA_06.names)
-            ]
-            logging.info(f"Building array takes {t - time.time()} seconds. Building pyarrow Table for format 06.")
-            
-            t = time.time()
-            table = pa.Table.from_arrays(arrays, names=SCHEMA_06.names)
-            logging.info(f"Building takes {t - time.time()} seconds. Writing parquet with {packet_buffer_size_06} rows")
-        
+            raise Exception("Received both format 06 and 14")
+        if packet_buffer_size_06 > 0:
+            _write_batch_06()
         if packet_buffer_size_14 > 0:
-            logging.info(f"Building array of size = {packet_buffer_size_14}")
-            arrays = [
-                pa.array(packet_buffer_14[name], type=SCHEMA_14[i].type) for i, name in enumerate(SCHEMA_14.names)
-            ]
-            logging.info("Building pyarrow Table for format 14")
-            table = pa.Table.from_arrays(arrays, names=SCHEMA_14.names)
-            logging.info(f"Writing parquet with {packet_buffer_size_14} rows")
-
-    t = time.time()
-    atomic_write_parquet(table, output_file)
-    logging.info(f"Writing takes {t - time.time()} seconds. File {output_file} wrote with {table.num_rows} lines.")
+            _write_batch_14()
+        if writer is None:
+            logging.info("No data to write; nothing to flush.")
+            return
+        
+        # Close and atomically move tmp -> final
+        writer.close()
+        fd = os.open(writer_tmp_path, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        os.replace(writer_tmp_path, output_file)
+        logging.info(f"Finalized parquet: {output_file}")
 
 # Packet handler
 def handle_packet(packet):
@@ -212,6 +256,8 @@ def handle_packet_06(packet):
                     packet_buffer_06[f'ask_volume_{j}'].append(None)
 
             packet_buffer_size_06 += 1
+            if packet_buffer_size_06 >= BATCH_ROWS:
+                _write_batch_06()
 
     except Exception as e:
         logging.error(f"Error handling packet: {e}")
@@ -245,6 +291,8 @@ def handle_packet_14(packet):
             packet_buffer_14['reserved'].append(reserved)
 
             packet_buffer_size_14 += 1
+            if packet_buffer_size_14 >= BATCH_ROWS:
+                _write_batch_14()
 
     except Exception as e:
         logging.error(f"Error decoding warrant data: {e}")
@@ -299,7 +347,6 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         logging.info("Stopping parser...")
-        flush_to_parquet()
         parser.end_loop()
     except Exception as e:
         logging.error(f"Error: {e}")
