@@ -8,7 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     build-essential \       
     cmake \                 
-    python3 \              
+    python3 \    
+    python3-dev \          
     python3-pip \
     netcat && \        
     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -23,6 +24,11 @@ COPY ./example ./example
 COPY ./extern ./extern
 COPY ./CMakeLists.txt .
 COPY ./test ./test
+COPY ./setup.py .
 
 # Create a build directory and build the C++ project
-RUN mkdir build && cd build && cmake .. && cmake --build .
+# RUN mkdir build && cd build && cmake .. && cmake --build .
+#RUN pip install .
+RUN pip install uv 
+
+RUN uv pip install . --system
