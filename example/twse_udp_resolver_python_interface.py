@@ -10,7 +10,7 @@ logging.basicConfig(
     level=logging.NOTSET,
     datefmt='%Y-%m-%d %H:%M:%S',
     filename='main.log',
-    encoding='utf-8'
+    # encoding='utf-8'
 )
 logging.getLogger().setLevel(logging.NOTSET)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
