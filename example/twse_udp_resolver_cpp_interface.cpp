@@ -140,7 +140,6 @@ void handle_packet(const Packet& packet, const std::string& mode, const std::str
 
 int main(int argc, char* argv[]) {
     // Create a parser instance
-    std::cerr << "Test A" << std::endl;
 
     Parser parser;
 
@@ -176,8 +175,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::cerr << "Test B" << std::endl;
-
     // Configure multicast if specified
     if (!multicast_group.empty() && !interface_ip.empty()) {
         Logger::getInstance().log("Configuring multicast with group: " + multicast_group + 
@@ -185,19 +182,13 @@ int main(int argc, char* argv[]) {
         parser.set_multicast(multicast_group, interface_ip);
     }
 
-    
-
     // Set allowed format codes if specified
     if (!format_codes.empty()) {
         parser.set_allowed_format_codes(format_codes);
     }
 
-    std::cerr << "Test C" << std::endl;
-
     // Start the parser with the callback function
     parser.start_loop(port, [mode, logger_stock](const Packet& p) { handle_packet(p, mode, logger_stock); });
-
-    std::cerr << "Test D" << std::endl;
 
     // non stop looping
     while (true) {
