@@ -203,7 +203,6 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
         log_message(ss.str());
         return; // Ignore invalid packets
     }
-
     if (packet.format_code == 0x06 || packet.format_code == 0x17) {
         if (!parse_body_06(raw_packet, packet, offset)) {
             log_message("Invalid body for format code 0x06");
@@ -214,6 +213,9 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
             log_message("Invalid body for format code 0x14");
             return;
         }
+    } else {
+        // log_message("Unsupported format code: " + std::to_string(packet.format_code));
+        return; // Ignore unsupported format codes
     }
 
     // Validate the checksum

@@ -99,6 +99,7 @@ This script runs the test suite, where `TWSE_mocker.py` sends several example pa
 2. **Mocker Container**: Simulates the TWSE by sending example UDP packets to the parser.
 
 You should see the parser process and handle the packets sent by the mocker during the test.
+You should go into the docker container to run the test.
 
 ### Run the cpp example
 
@@ -129,10 +130,10 @@ Run the cpp example with benchmark mode.
 
 ### Run the python example
 
-Run the python example with testing mode.
+Run the python example with testing mode. Change to different numbers to test different formats.
 
 ```bash
-python3 example/twse_udp_resolver_python_interface.py
+python3 example/twse_udp_resolver_python_interface.py -port 10000 -format-codes 6
 ```
 
 Run the python example with multicast mode.
