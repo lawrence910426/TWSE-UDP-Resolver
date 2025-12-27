@@ -214,7 +214,7 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
             return;
         }
     } else {
-        log_message("Unsupported format code: " + std::to_string(packet.format_code));
+        // log_message("Unsupported format code: " + std::to_string(packet.format_code));
         return; // Ignore unsupported format codes
     }
 
