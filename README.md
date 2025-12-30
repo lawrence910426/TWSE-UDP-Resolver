@@ -17,7 +17,6 @@ sudo apt install python3 python3-pip python3-dev build-essential -y
 ```
 git clone https://github.com/lawrence910426/TWSE-UDP-Resolver.git
 git pull --recurse-submodules && git submodule update --init --recursive
-cd TWSE-UDP-Resolver
 python3 -m venv virtual
 source virtual/bin/activate
 pip install .
