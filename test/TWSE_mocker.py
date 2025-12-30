@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
     packets = [
         create_packet_1(), create_packet_2(), create_packet_3(), create_packet_4(),
-        create_packet_useless_format(), create_packet_invalid()
+        create_packet_useless_format(), create_packet_invalid(), create_packet_format_23_1()
     ]
     packet_index = 0
 
