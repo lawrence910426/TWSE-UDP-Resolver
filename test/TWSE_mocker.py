@@ -145,6 +145,47 @@ def create_packet_useless_format():
 
     return esc_code + header + body + checksum + terminal_code
 
+def create_packet_format_23_1():
+    # ESC-CODE (ASCII 27)
+    esc_code = bytes([0x1B]) 
+    
+    # HEADER
+    header = bytes([
+        0x00, # 2.1 Message Length Not Finished
+        0x67,
+        0x02, # 2.2 Business Type
+        0x23, # 2.3 Format Code
+        0x01, # 2.4 Format Version
+        0x00, # 2.5 Transmission Number
+        0x87,
+        0x12, 
+        0x34  
+        ])
+    
+    # BODY
+    body = (
+        b'\x38\x30\x36\x39\x20\x20' # 3.1 Stock code: "8069  "
+        b'\x11\x30\x45\x12\x34\x56' # 3.2 Match time: 11:30:45.123.456
+        b'\x92' # 3.3 Display Flag 
+        b'\x00' # 3.4 Limit Up/Limit Down Flag
+        b'\x10' # 3.5 Status Flag
+        b'\x00\x00\x00\x00\x12\x34' # 3.6 Cumulative Volume: 1234
+        # 3.7 Prices(5) and Quantities(6)
+        b'\x00\x01\x85\x50\x00' # trade price:185.5000
+        b'\x00\x00\x00\x00\x00\x50' # trade quantity:50
+        b'\x00\x01\x85\x00\x00' # buy price 1:185.0000
+        b'\x00\x00\x00\x00\x01\x00' # buy quantity 1:100
+        b'\x00\x01\x86\x00\x00' # sell price 1:186.0000
+        b'\x00\x00\x00\x00\x02\x00' # sell quantity 1:200
+    )
+    
+    # Calculate checksum
+    checksum = bytes([calculate_checksum(header + body)])
+    
+    # TERMINAL-CODE
+    terminal_code = b'\x0D\x0A'
+    return esc_code + header + body + checksum + terminal_code
+
 def create_packet_invalid():
     return create_packet_1()[::-1]
 
