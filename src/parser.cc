@@ -369,23 +369,25 @@ bool Parser::parse_body_23(const std::vector<uint8_t>& raw_packet, Packet& packe
         packet.cumulative_volume = (packet.cumulative_volume << 8) | raw_packet[offset++];
     }
 
-    // Parse dynamic prices and quantities (if present) - same as format 0x06
-    while (offset + 9 <= raw_packet.size() - TERMINAL_CODE_SIZE - 1) {
-        uint32_t price = (raw_packet[offset + 1] << 24) |
-                         (raw_packet[offset + 2] << 16) |
-                         (raw_packet[offset + 3] << 8) |
-                         raw_packet[offset + 4];
-        packet.prices.push_back(price);
-        offset += 5;
+    // Parse dynamic prices and quantities (if present) - same as format 0x23
+    while (offset + 11 <= raw_packet.size() - TERMINAL_CODE_SIZE - 1) {
+        
+        // Price (5 bytes PACK BCD)
+        uint64_t price = 0;
+        for (int i = 0; i < 5; ++i) {
+            price = (price << 8) | raw_packet[offset++];
+        }
+        packet.prices.push_back((uint32_t)price);
 
-        if (offset + 4 > raw_packet.size()) break;
+        // Check if remaining length is enough for quantity (6 bytes)
+        if (offset + 6 > raw_packet.size()) break;
 
-        uint32_t quantity = (raw_packet[offset] << 24) |
-                            (raw_packet[offset + 1] << 16) |
-                            (raw_packet[offset + 2] << 8) |
-                            raw_packet[offset + 3];
-        packet.quantities.push_back(quantity);
-        offset += 4;
+        // Quantity (Format 23 is 6 bytes PACK BCD)
+        uint64_t quantity = 0;
+        for (int i = 0; i < 6; ++i) {
+            quantity = (quantity << 8) | raw_packet[offset++];
+        }
+        packet.quantities.push_back((uint32_t)quantity);
     }
 
     return true;
