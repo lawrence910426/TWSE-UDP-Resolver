@@ -113,6 +113,11 @@ void handle_packet(const Packet& packet, const std::string& mode, const std::str
     
     Logger::getInstance().log(ss.str());
 
+    if (packet.prices.empty()) {
+        Logger::getInstance().log("Error: No prices found in packet!");
+        return;
+    }
+
     // Print prices and quantities
     for (size_t i = 0; i < packet.prices.size(); ++i) {
         std::stringstream price_ss;
@@ -139,8 +144,10 @@ void handle_packet(const Packet& packet, const std::string& mode, const std::str
 }
 
 int main(int argc, char* argv[]) {
-    // Create a parser instance
+    // Generate a logger folder and initialize logger
+    Logger::getInstance().init("parser_output.log");
 
+    // Create a parser instance
     Parser parser;
 
     int port = 10000;

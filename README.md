@@ -103,11 +103,11 @@ You should go into the docker container to run the test.
 
 ### Run the cpp example
 
-Run the cpp example with testing mode.
+Run the cpp example with testing mode. Input `tail -f build/logger/parser_output.log` to see the log.
 
 ```bash
 cd build
-./twse_udp_resolver_cpp_interface
+./twse_udp_resolver_cpp_interface -format-codes 6 23
 ```
 
 Run the cpp example with multicast mode.
