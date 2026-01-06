@@ -262,7 +262,11 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
                                  raw_packet[offset + 8];
     offset += HEADER_LENGTH;
 
-    // If allowed_format_codes is empty, accept all format codes. Otherwise, filter.
+    
+    if (allowed_format_codes.empty()) {
+        return false;
+    }
+    
     if (!allowed_format_codes.empty() &&
         std::find(allowed_format_codes.begin(), allowed_format_codes.end(), packet.format_code) == allowed_format_codes.end()) {
         return false; // Not in the allowed list, so we skip this packet

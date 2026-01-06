@@ -103,7 +103,7 @@ You should go into the docker container to run the test.
 
 ### Run the cpp example
 
-Run the cpp example with testing mode. Input `tail -f build/logger/parser_output.log` to see the log.
+Run the cpp example with testing mode. In a separate terminal, run tail -f build/logger/parser_output.log to follow the log output
 
 ```bash
 cd build
