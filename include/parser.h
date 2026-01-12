@@ -37,7 +37,7 @@ struct Packet {
     uint8_t display_item;         // 1 byte, BIT MAP
     uint8_t limit_up_limit_down;        // 1 byte, BIT MAP
     uint8_t status_note;          // 1 byte, BIT MAP
-    uint32_t cumulative_volume;   // 4 bytes, PACK BCD
+    uint64_t cumulative_volume;   // 6 bytes for format 0x23, 4 bytes for 0x06; PACK BCD
     std::vector<uint32_t> prices; // Prices (each 5 bytes, PACK BCD)
     std::vector<uint32_t> quantities; // Quantities (each 4 bytes, PACK BCD)
 
@@ -88,6 +88,8 @@ private:
     bool parse_body_06(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     // BODY for format code 0x14
     bool parse_body_14(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
+    // BODY for format code 0x23
+    bool parse_body_23(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     bool validate_checksum(const std::vector<uint8_t>& raw_packet, const Packet& packet);
     bool validate_terminal_code(const std::vector<uint8_t>& raw_packet, const Packet& packet);
 

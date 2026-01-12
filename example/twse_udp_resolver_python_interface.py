@@ -105,13 +105,13 @@ def handle_packet_06(packet, mode, logger_stock):
         
         
         # Print prices and quantities
-        for i in range(len(packet.prices)):
-            price_ss = f"Price {i + 1}: {packet.prices[i]}, Quantity: "
-            if i < len(packet.quantities):
-                price_ss += str(packet.quantities[i])
-            else:
-                price_ss += "N/A"
-            message += price_ss + "\n"
+        # for i in range(len(packet.prices)):
+        #     price_ss = f"Price {i + 1}: {packet.prices[i]}, Quantity: "
+        #     if i < len(packet.quantities):
+        #         price_ss += str(packet.quantities[i])
+        #     else:
+        #         price_ss += "N/A"
+        #     message += price_ss + "\n"
 
 
         checksum_ss = f"Checksum: {packet.checksum}"
@@ -161,6 +161,83 @@ def handle_packet_14(packet, mode, logger_stock):
     except Exception as e:
         logging.error(f"Error decoding warrant data: {e}")
 
+# Format code 0x23
+def handle_packet_23(packet, mode, logger_stock):
+    try:
+        # Check if packet is None
+        if packet is None:
+            logging.warning("Received None packet")
+            return
+        
+        # Check if logger_stock is set
+        if logger_stock:
+            if packet.stock_code != logger_stock:
+                return
+            
+        # benchmark mode
+        if mode == "benchmark":
+            message = f"Match Time: {packet.match_time:x}"
+            logging.info(message)
+            return
+            
+        # Access packet properties directly
+        message = f"Received Packet (Format 23):\n"
+        message += f"Message Length: {packet.message_length:x}\n"
+        message += f"Business Type: {packet.business_type}\n"
+        message += f"Format Code: {packet.format_code}\n"
+        message += f"Format Version: {packet.format_version}\n"
+        message += f"Transmission Number: {packet.transmission_number:x}\n"
+        message += f"Stock Code: {packet.stock_code}\n"
+        message += f"Match Time: {packet.match_time:x}\n"
+        message += f"Display Item: {packet.display_item:x}\n"
+        message += f"Limit Up Limit Down: {packet.limit_up_limit_down:x}\n"
+        message += f"Status Note: {packet.status_note:x}\n"
+        
+        # Format 23 Volume is 6 bytes
+        message += f"Cumulative Volume: {packet.cumulative_volume:x}\n"
+
+        # has_deal = (packet.display_item & 0x80) != 0
+        # bid_count = (packet.display_item & 0x70) >> 4
+        # ask_count = (packet.display_item & 0x0E) >> 1
+        
+        # current_offset = 0
+        
+        # # Deal with trade price and quantity
+        # if has_deal:
+        #     price_ss = f"Trade Price: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
+        #     message += price_ss + "\n"
+        #     current_offset += 1
+            
+        # # Deal with bid price quantity
+        # for i in range(bid_count):
+        #     price_ss = f"Buy Price {i + 1}: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
+        #     message += price_ss + "\n"
+        #     current_offset += 1
+
+        # # Deal with ask price quantity
+        # for i in range(ask_count):
+        #     price_ss = f"Sell Price {i + 1}: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
+        #     message += price_ss + "\n"
+        #     current_offset += 1
+
+        checksum_ss = f"Checksum: {packet.checksum}"
+        message += checksum_ss + "\n"
+
+        terminal_ss = f"Terminal Code: 0x{packet.terminal_code:x}"
+        message += terminal_ss + "\n"
+        
+        message += "=== Analyzed Packet ===\n"
+        message += analyze_packet(packet)
+        message += "========================"
+
+        logging.info(message)
+        return
+            
+    except Exception as e:
+        logging.error(f"Error handling packet 23: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
+
 def handle_packet(packet, mode, logger_stock):
     """
     A unified packet handler that dispatches to specific handlers based on format_code.
@@ -168,11 +245,12 @@ def handle_packet(packet, mode, logger_stock):
     if packet is None:
         logging.warning("Received None packet")
         return
-    
     if packet.format_code == 0x06 or packet.format_code == 0x17:
         handle_packet_06(packet, mode, logger_stock)
     elif packet.format_code == 0x14:
         handle_packet_14(packet, mode, logger_stock)
+    elif packet.format_code == 0x23:
+        handle_packet_23(packet, mode, logger_stock)
     else:
         logging.warning(f"Received unhandled format code: {packet.format_code}")
 

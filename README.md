@@ -103,11 +103,11 @@ You should go into the docker container to run the test.
 
 ### Run the cpp example
 
-Run the cpp example with testing mode.
+Run the cpp example with testing mode. In a separate terminal, run `tail -f build/logger/parser_output.log` to follow the log output
 
 ```bash
 cd build
-./twse_udp_resolver_cpp_interface
+./twse_udp_resolver_cpp_interface -format-codes 6 23
 ```
 
 Run the cpp example with multicast mode.
@@ -133,7 +133,7 @@ Run the cpp example with benchmark mode.
 Run the python example with testing mode. Change to different numbers to test different formats.
 
 ```bash
-python3 example/twse_udp_resolver_python_interface.py -port 10000 -format-codes 6
+python3 example/twse_udp_resolver_python_interface.py -port 10000 -format-codes 6 23
 ```
 
 Run the python example with multicast mode.

@@ -164,6 +164,7 @@ int hexStringToInt(const std::string& hex_str) {
 
 // Add a new method to set allowed format codes
 void Parser::set_allowed_format_codes(const std::vector<uint8_t>& codes) {
+    // Store the codes verbatim (the API expects numeric format codes)
     for (const auto& code : codes) {
         allowed_format_codes.push_back(hexStringToInt(std::to_string(code)));
     }
@@ -213,6 +214,11 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
             log_message("Invalid body for format code 0x14");
             return;
         }
+    } else if (packet.format_code == 0x23) {
+        if (!parse_body_23(raw_packet, packet, offset)) {
+            log_message("Invalid body for format code 0x23");
+            return;
+        }
     } else {
         // log_message("Unsupported format code: " + std::to_string(packet.format_code));
         return; // Ignore unsupported format codes
@@ -256,6 +262,7 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
                                  raw_packet[offset + 8];
     offset += HEADER_LENGTH;
 
+    
     if (allowed_format_codes.empty()) {
         return false;
     }
@@ -264,8 +271,8 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
         std::find(allowed_format_codes.begin(), allowed_format_codes.end(), packet.format_code) == allowed_format_codes.end()) {
         return false; // Not in the allowed list, so we skip this packet
     }
-    
-    return true;
+
+    return true; 
 }
 
 // Parse the body for format code 0x06, 0x17
@@ -338,6 +345,54 @@ bool Parser::parse_body_14(const std::vector<uint8_t>& raw_packet, Packet& packe
     offset += 2;
     std::memcpy(packet.reserved, &raw_packet[offset], 2);
     offset += 2;
+
+    return true;
+}
+
+// --- parse body for format 0x23 ---
+bool Parser::parse_body_23(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
+    // Minimum required: stock_code(6) + match_time(6) + display_item(1) + limit_up_limit_down(1) + status_note(1) + cumulative_volume(6)
+    const size_t min_body_len = 6 + 6 + 1 + 1 + 1 + 6;
+    if (offset + min_body_len > raw_packet.size()) return false;
+
+    std::memcpy(packet.stock_code, &raw_packet[offset], 6);
+    offset += 6;
+
+    packet.match_time = 0;
+    for (size_t i = 0; i < 6; ++i) {
+        packet.match_time = (packet.match_time << 8) | raw_packet[offset++];
+    }
+
+    packet.display_item = raw_packet[offset++];
+    packet.limit_up_limit_down = raw_packet[offset++];
+    packet.status_note = raw_packet[offset++];
+
+    // cumulative volume is 6 bytes for format 0x23
+    packet.cumulative_volume = 0;
+    for (size_t i = 0; i < 6; ++i) {
+        packet.cumulative_volume = (packet.cumulative_volume << 8) | raw_packet[offset++];
+    }
+
+    // Parse dynamic prices and quantities (if present) - same as format 0x23
+    while (offset + 11 <= raw_packet.size() - TERMINAL_CODE_SIZE - 1) {
+        
+        // Price (5 bytes PACK BCD)
+        uint64_t price = 0;
+        for (int i = 0; i < 5; ++i) {
+            price = (price << 8) | raw_packet[offset++];
+        }
+        packet.prices.push_back((uint32_t)price);
+
+        // Check if remaining length is enough for quantity (6 bytes)
+        if (offset + 6 > raw_packet.size()) break;
+
+        // Quantity (Format 23 is 6 bytes PACK BCD)
+        uint64_t quantity = 0;
+        for (int i = 0; i < 6; ++i) {
+            quantity = (quantity << 8) | raw_packet[offset++];
+        }
+        packet.quantities.push_back((uint32_t)quantity);
+    }
 
     return true;
 }

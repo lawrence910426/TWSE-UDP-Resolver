@@ -5,3 +5,4 @@ test.py
 logger
 *.log
 *.pcap
+example/twse_udp_resolver_cpp_interface.o
