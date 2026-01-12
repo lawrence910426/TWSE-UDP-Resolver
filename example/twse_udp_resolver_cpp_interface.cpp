@@ -119,16 +119,16 @@ void handle_packet(const Packet& packet, const std::string& mode, const std::str
     }
 
     // Print prices and quantities
-    for (size_t i = 0; i < packet.prices.size(); ++i) {
-        std::stringstream price_ss;
-        price_ss << "Price " << i + 1 << ": " << packet.prices[i] << ", Quantity: ";
-        if (i < packet.quantities.size()) {
-            price_ss << packet.quantities[i];
-        } else {
-            price_ss << "N/A";
-        }
-        Logger::getInstance().log(price_ss.str());
-    }
+    // for (size_t i = 0; i < packet.prices.size(); ++i) {
+    //     std::stringstream price_ss;
+    //     price_ss << "Price " << i + 1 << ": " << packet.prices[i] << ", Quantity: ";
+    //     if (i < packet.quantities.size()) {
+    //         price_ss << packet.quantities[i];
+    //     } else {
+    //         price_ss << "N/A";
+    //     }
+    //     Logger::getInstance().log(price_ss.str());
+    // }
 
     std::stringstream checksum_ss;
     checksum_ss << "Checksum: " << static_cast<int>(packet.checksum);

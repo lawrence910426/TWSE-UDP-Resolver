@@ -105,13 +105,13 @@ def handle_packet_06(packet, mode, logger_stock):
         
         
         # Print prices and quantities
-        for i in range(len(packet.prices)):
-            price_ss = f"Price {i + 1}: {packet.prices[i]}, Quantity: "
-            if i < len(packet.quantities):
-                price_ss += str(packet.quantities[i])
-            else:
-                price_ss += "N/A"
-            message += price_ss + "\n"
+        # for i in range(len(packet.prices)):
+        #     price_ss = f"Price {i + 1}: {packet.prices[i]}, Quantity: "
+        #     if i < len(packet.quantities):
+        #         price_ss += str(packet.quantities[i])
+        #     else:
+        #         price_ss += "N/A"
+        #     message += price_ss + "\n"
 
 
         checksum_ss = f"Checksum: {packet.checksum}"
@@ -196,29 +196,29 @@ def handle_packet_23(packet, mode, logger_stock):
         # Format 23 Volume is 6 bytes
         message += f"Cumulative Volume: {packet.cumulative_volume:x}\n"
 
-        has_deal = (packet.display_item & 0x80) != 0
-        bid_count = (packet.display_item & 0x70) >> 4
-        ask_count = (packet.display_item & 0x0E) >> 1
+        # has_deal = (packet.display_item & 0x80) != 0
+        # bid_count = (packet.display_item & 0x70) >> 4
+        # ask_count = (packet.display_item & 0x0E) >> 1
         
-        current_offset = 0
+        # current_offset = 0
         
-        # Deal with trade price and quantity
-        if has_deal:
-            price_ss = f"Trade Price: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
-            message += price_ss + "\n"
-            current_offset += 1
+        # # Deal with trade price and quantity
+        # if has_deal:
+        #     price_ss = f"Trade Price: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
+        #     message += price_ss + "\n"
+        #     current_offset += 1
             
-        # Deal with bid price quantity
-        for i in range(bid_count):
-            price_ss = f"Buy Price {i + 1}: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
-            message += price_ss + "\n"
-            current_offset += 1
+        # # Deal with bid price quantity
+        # for i in range(bid_count):
+        #     price_ss = f"Buy Price {i + 1}: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
+        #     message += price_ss + "\n"
+        #     current_offset += 1
 
-        # Deal with ask price quantity
-        for i in range(ask_count):
-            price_ss = f"Sell Price {i + 1}: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
-            message += price_ss + "\n"
-            current_offset += 1
+        # # Deal with ask price quantity
+        # for i in range(ask_count):
+        #     price_ss = f"Sell Price {i + 1}: {packet.prices[current_offset]}, Quantity: {packet.quantities[current_offset]}"
+        #     message += price_ss + "\n"
+        #     current_offset += 1
 
         checksum_ss = f"Checksum: {packet.checksum}"
         message += checksum_ss + "\n"

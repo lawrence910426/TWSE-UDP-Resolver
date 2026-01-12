@@ -210,7 +210,7 @@ def create_packet_format_23_TWSE():
         b'\xB2'                     # 3.3 Display Flag: Deal(1), Bids(3), Asks(1) -> 1 011 001 0
         b'\x00'                     # 3.4 Limit Up/Limit Down Flag: Normal
         b'\x10'                     # 3.5 Status Flag: Normal
-        b'\x00\x00\x00\x10\x50\x00' # 3.6 Cumulative Volume: 1,050,000
+        b'\x00\x00\x00\x10\x50\x00' # 3.6 Cumulative Volume: 1,050,00
         
         # 3.7 Dynamic Prices(5) and Quantities(6)
         # --- Deal ---
