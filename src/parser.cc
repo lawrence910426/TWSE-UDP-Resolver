@@ -62,6 +62,18 @@ void Parser::receive_loop(int port) {
         return;
     }
 
+    // Enlarge the receive queue so brief consumer stalls don't drop packets.
+    // SO_RCVBUFFORCE bypasses net.core.rmem_max but requires CAP_NET_ADMIN;
+    // fall back to SO_RCVBUF (clamped to rmem_max) when unavailable.
+    int rcvbuf = 64 * 1024 * 1024;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUFFORCE, &rcvbuf, sizeof(rcvbuf)) < 0) {
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf));
+    }
+    int actual_rcvbuf = 0;
+    socklen_t rcvbuf_len = sizeof(actual_rcvbuf);
+    getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &actual_rcvbuf, &rcvbuf_len);
+    log_message("recv buffer: " + std::to_string(actual_rcvbuf) + " bytes", false);
+
     sockaddr_in server_addr{};
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
