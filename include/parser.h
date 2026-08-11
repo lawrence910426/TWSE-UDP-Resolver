@@ -41,6 +41,23 @@ struct Packet {
     std::vector<uint32_t> prices; // Prices (each 5 bytes, PACK BCD)
     std::vector<uint32_t> quantities; // Quantities (each 4 bytes, PACK BCD)
 
+    // BODY for format code 0x01 (個股基本資料 / per-symbol reference data).
+    // The only message carrying the day's price limits. Broadcast on the same
+    // multicast line as format 0x06, every minute from ~07:40 to ~08:50 for
+    // every listed symbol, then every 5 minutes for new listings only.
+    //
+    // Unit is 1/10000 NTD, straight from the 9(5)V9(4) PACK BCD field: all five
+    // bytes are decoded, unlike the format 0x06 prices below, which drop their
+    // leading byte and so cannot represent anything at or above 10,000.
+    uint64_t reference_price;    // 今日參考價
+    uint64_t limit_up_price;     // 漲停價
+    uint64_t limit_down_price;   // 跌停價
+    // 股票筆數註記: "AL" marks the last record of a pre-open cycle (stock_code
+    // then holds the total symbol count rather than a symbol), "NE" the last of
+    // an intraday new-listing cycle, spaces otherwise. "AL" is how a consumer
+    // knows it has received a complete snapshot.
+    char symbol_count_note[2];
+
     // BODY for format code 0x14
     char warrant_brief_name[16]; // A. warrant brief name
     char separator[2];           // separator
@@ -72,9 +89,16 @@ public:
     // Configure multicast settings
     void set_multicast(const std::string& group, const std::string& iface);
     
-    // Set allowed format codes
+    // Set allowed format codes.
+    // MANDATORY before start_loop: parse_header rejects every packet while this
+    // list is empty, so an unset filter silently yields no packets at all.
     void set_allowed_format_codes(const std::vector<uint8_t>& codes);
-    
+
+    // Decode one framed record (ESC .. 0x0D 0x0A) without touching a socket,
+    // honouring the format-code filter. Returns false if the record is not one
+    // we decode or fails validation. Exposed so decoding can be unit-tested.
+    bool decode_packet(const std::vector<uint8_t>& raw_packet, Packet& packet);
+
 private:
     // Parsing automaton logic
     void parse_packet(const std::vector<uint8_t>& raw_packet);
@@ -84,6 +108,8 @@ private:
 
     // Helper methods for parsing
     bool parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
+    // BODY for format code 0x01
+    bool parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     // BODY for format code 0x06, 0x17
     bool parse_body_06(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     // BODY for format code 0x14

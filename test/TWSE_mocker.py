@@ -121,6 +121,61 @@ def create_packet_4():
 
     return esc_code + header + body + checksum + terminal_code
 
+def _bcd5(value):
+    """A 9(5)V9(4) price as 5 PACK BCD bytes: 10 nibbles, zero padded.
+
+    The value is the price in 1/10000 NTD, so 35.15 NTD is 351500.
+    """
+    digits = f"{value:010d}"
+    return bytes(int(digits[i]) << 4 | int(digits[i + 1]) for i in range(0, 10, 2))
+
+def create_packet_format_01(business_type=0x01, stock_code=b'2330  ',
+                            reference=351500, limit_up=386500, limit_down=316500,
+                            count_note=b'  '):
+    """格式一 個股基本資料 -- the only message carrying 參考價/漲停價/跌停價.
+
+    Fixed 114 bytes. Spec byte numbers are 1-based and byte 1 is the ESC code,
+    so index = spec - 1. TPEx (business_type 0x02) carries an extra 類股註記 at
+    spec byte 40, which pushes all three prices one byte later than TWSE:
+
+                          TWSE (01)    TPEx (02)
+        今日參考價          41-45        42-46
+        漲停價             46-50        47-51
+        跌停價             51-55        52-56
+    """
+    body = bytearray(104)                     # spec 11..114
+    body[0:6] = stock_code                    # 股票代號,     spec 11-16
+    body[26:28] = count_note                  # 股票筆數註記,  spec 37-38
+    base = 31 if business_type == 0x02 else 30
+    body[base:base + 5] = _bcd5(reference)
+    body[base + 5:base + 10] = _bcd5(limit_up)
+    body[base + 10:base + 15] = _bcd5(limit_down)
+
+    esc_code = bytes([0x1B])
+    # 訊息長度 "0114" | 業務別 | 傳輸格式代碼 "01" | 版別 "09" | 傳輸序號
+    header = bytes([0x01, 0x14, business_type, 0x01, 0x09, 0x00, 0x00, 0x00, 0x01])
+    fields = bytes(body[:101])                # spec 11..111
+    checksum = bytes([calculate_checksum(header + fields)])
+    packet = esc_code + header + fields + checksum + b'\x0D\x0A'
+    # The length is the thing under test -- a silent 113 or 115 would move every
+    # price and still checksum correctly.
+    assert len(packet) == 114, f"格式一 must be 114 bytes, built {len(packet)}"
+    return packet
+
+def create_packet_format_01_OTC():
+    return create_packet_format_01(business_type=0x02, stock_code=b'6488  ')
+
+def create_packet_format_01_AL():
+    """Last record of a pre-open cycle: 股票代號 holds the total symbol count."""
+    return create_packet_format_01(stock_code=b'  1234', reference=0,
+                                   limit_up=0, limit_down=0, count_note=b'AL')
+
+def create_packet_format_01_big_price():
+    """12345.6789 NTD -- above what format 6 can express, since parse_body_06
+    drops the leading BCD byte. Regression guard for parse_body_01."""
+    return create_packet_format_01(stock_code=b'2454  ', reference=123456789,
+                                   limit_up=123456789, limit_down=123456789)
+
 def create_packet_useless_format():
     esc_code = bytes([0x1B])
     header = bytes([0x00, 0x86, 0x01, 0x07, 0x04, 0x00, 0x04, 0x12, 0x34])
