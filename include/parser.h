@@ -74,7 +74,14 @@ public:
     
     // Set allowed format codes
     void set_allowed_format_codes(const std::vector<uint8_t>& codes);
-    
+
+    // Install/replace the packet callback without starting the socket loop
+    void set_callback(const PacketCallback& callback);
+
+    // Split one UDP datagram payload on the 0x0D 0x0A terminator and parse
+    // each message. Shared by receive_loop (live) and file-mode drivers.
+    void process_datagram(const uint8_t* data, size_t len);
+
 private:
     // Parsing automaton logic
     void parse_packet(const std::vector<uint8_t>& raw_packet);

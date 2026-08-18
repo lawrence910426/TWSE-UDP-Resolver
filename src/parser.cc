@@ -62,6 +62,18 @@ void Parser::receive_loop(int port) {
         return;
     }
 
+    // Enlarge the receive queue so brief consumer stalls don't drop packets.
+    // SO_RCVBUFFORCE bypasses net.core.rmem_max but requires CAP_NET_ADMIN;
+    // fall back to SO_RCVBUF (clamped to rmem_max) when unavailable.
+    int rcvbuf = 64 * 1024 * 1024;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUFFORCE, &rcvbuf, sizeof(rcvbuf)) < 0) {
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf));
+    }
+    int actual_rcvbuf = 0;
+    socklen_t rcvbuf_len = sizeof(actual_rcvbuf);
+    getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &actual_rcvbuf, &rcvbuf_len);
+    log_message("recv buffer: " + std::to_string(actual_rcvbuf) + " bytes", false);
+
     sockaddr_in server_addr{};
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
@@ -114,29 +126,38 @@ void Parser::receive_loop(int port) {
     while (running) {
         ssize_t len = recv(sockfd, buffer, sizeof(buffer), 0);
         if (len > 0) {
-            std::vector<uint8_t> raw_packet(buffer, buffer + len);
-            
-            // Split packets by 0D 0A delimiter
-            size_t start_pos = 0;
-            for (size_t i = 0; i < raw_packet.size() - 1; i++) {
-                if (raw_packet[i] == 0x0D && raw_packet[i + 1] == 0x0A) {
-                    // Found a complete packet
-                    size_t packet_length = i + 2 - start_pos;  // Including 0D 0A
-                    std::vector<uint8_t> single_packet(raw_packet.begin() + start_pos, 
-                                                     raw_packet.begin() + start_pos + packet_length);
-                    
-                    // Process single packet
-                    parse_packet(single_packet);
-                    
-                    // Update start position for next packet
-                    start_pos = i + 2;
-                }
-            }
+            process_datagram(reinterpret_cast<const uint8_t*>(buffer), static_cast<size_t>(len));
         } else if (len < 0) {
             if (errno != EINTR && errno != EBADF) {  // ignore EINTR and EBADF
                 log_message("Error receiving data: " + std::string(strerror(errno)), true);
             }
             break;
+        }
+    }
+}
+
+void Parser::set_callback(const PacketCallback& callback) {
+    packet_callback = callback;
+}
+
+void Parser::process_datagram(const uint8_t* data, size_t len) {
+    if (len < 2) return;
+    std::vector<uint8_t> raw_packet(data, data + len);
+
+    // Split packets by 0D 0A delimiter
+    size_t start_pos = 0;
+    for (size_t i = 0; i < raw_packet.size() - 1; i++) {
+        if (raw_packet[i] == 0x0D && raw_packet[i + 1] == 0x0A) {
+            // Found a complete packet
+            size_t packet_length = i + 2 - start_pos;  // Including 0D 0A
+            std::vector<uint8_t> single_packet(raw_packet.begin() + start_pos,
+                                             raw_packet.begin() + start_pos + packet_length);
+
+            // Process single packet
+            parse_packet(single_packet);
+
+            // Update start position for next packet
+            start_pos = i + 2;
         }
     }
 }
