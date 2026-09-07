@@ -60,7 +60,23 @@ PYBIND11_MODULE(twse_udp_resolver, m) {
     py::class_<Parser>(m, "Parser")
         .def(py::init<>())
         .def("start_loop", &Parser::start_loop, "Start the UDP stream parsing loop")
-        .def("end_loop", &Parser::end_loop, "Stop the parsing loop")
+        // end_loop joins the receive thread, which may be blocked acquiring
+        // the GIL to deliver a callback — release the GIL while waiting or
+        // shutdown deadlocks.
+        .def("end_loop", &Parser::end_loop, py::call_guard<py::gil_scoped_release>(), "Stop the parsing loop")
+        .def("set_callback", &Parser::set_callback,
+             "Install the packet callback without starting the socket loop (file mode)")
+        .def("process_datagram",
+             [](Parser &self, py::bytes datagram) {
+                 char *buf;
+                 py::ssize_t len;
+                 if (PYBIND11_BYTES_AS_STRING_AND_SIZE(datagram.ptr(), &buf, &len) != 0)
+                     throw py::error_already_set();
+                 self.process_datagram(reinterpret_cast<const uint8_t*>(buf), static_cast<size_t>(len));
+             },
+             py::arg("datagram"),
+             "Split one UDP datagram payload on 0x0D 0x0A and parse each message; "
+             "the callback fires inline on the calling thread")
         .def("set_multicast", &Parser::set_multicast, "Sets the parameter of multicast")
         .def("set_allowed_format_codes", &Parser::set_allowed_format_codes, "Set the allowed format codes");
 }
