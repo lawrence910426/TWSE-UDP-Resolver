@@ -94,11 +94,6 @@ public:
     // Set allowed format codes
     void set_allowed_format_codes(const std::vector<uint8_t>& codes);
 
-    // Decode one framed record (ESC .. 0x0D 0x0A) without touching a socket,
-    // honouring the format-code filter. Returns false if the record is not one
-    // we decode or fails validation. Exposed so decoding can be unit-tested.
-    bool decode_packet(const std::vector<uint8_t>& raw_packet, Packet& packet);
-
     // Install/replace the packet callback without starting the socket loop
     void set_callback(const PacketCallback& callback);
 

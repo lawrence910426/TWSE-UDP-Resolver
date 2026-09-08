@@ -198,12 +198,8 @@ void Parser::set_allowed_format_codes(const std::vector<uint8_t>& codes) {
     log_message(ss.str());
 }
 
-// Decode one framed record. Split out of parse_packet so the decoding path can
-// be exercised without a socket: start_loop() is otherwise the only way in, and
-// a unit test cannot bind a multicast group.
-bool Parser::decode_packet(const std::vector<uint8_t>& raw_packet, Packet& packet) {
-    packet = Packet{};
-
+// Parse the received packet
+void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     if (raw_packet.empty() || raw_packet[0] != ESC_CODE) {
         log_message("Invalid packet");
         // log raw_packet
@@ -212,9 +208,10 @@ bool Parser::decode_packet(const std::vector<uint8_t>& raw_packet, Packet& packe
             ss << std::hex << static_cast<int>(byte) << " ";
         }
         log_message(ss.str());
-        return false; // Ignore packets that don't start with ESC-CODE
+        return; // Ignore packets that don't start with ESC-CODE
     }
 
+    Packet packet{};
     size_t offset = 1; // Start parsing after ESC-CODE
 
     // Parse the header
@@ -226,31 +223,31 @@ bool Parser::decode_packet(const std::vector<uint8_t>& raw_packet, Packet& packe
             ss << std::hex << static_cast<int>(byte) << " ";
         }
         log_message(ss.str());
-        return false; // Ignore invalid packets
+        return; // Ignore invalid packets
     }
     if (packet.format_code == 0x01) {
         if (!parse_body_01(raw_packet, packet, offset)) {
             log_message("Invalid body for format code 0x01");
-            return false;
+            return;
         }
     } else if (packet.format_code == 0x06 || packet.format_code == 0x17) {
         if (!parse_body_06(raw_packet, packet, offset)) {
             log_message("Invalid body for format code 0x06");
-            return false;
+            return;
         }
     } else if (packet.format_code == 0x14) {
         if (!parse_body_14(raw_packet, packet, offset)) {
             log_message("Invalid body for format code 0x14");
-            return false;
+            return;
         }
     } else if (packet.format_code == 0x23) {
         if (!parse_body_23(raw_packet, packet, offset)) {
             log_message("Invalid body for format code 0x23");
-            return false;
+            return;
         }
     } else {
         // log_message("Unsupported format code: " + std::to_string(packet.format_code));
-        return false; // Ignore unsupported format codes
+        return; // Ignore unsupported format codes
     }
 
     // Validate the checksum
@@ -262,23 +259,17 @@ bool Parser::decode_packet(const std::vector<uint8_t>& raw_packet, Packet& packe
             ss << std::hex << static_cast<int>(byte) << " ";
         }
         log_message(ss.str());
-        return false; // Ignore invalid packets
+        return; // Ignore invalid packets
     }
 
     // Validate the terminal code
     if (!validate_terminal_code(raw_packet, packet)) {
         log_message("Invalid terminal code");
-        return false; // Ignore invalid packets
+        return; // Ignore invalid packets
     }
 
-    return true;
-}
-
-// Parse the received packet
-void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
-    Packet packet{};
     // If all checks pass, invoke the callback
-    if (decode_packet(raw_packet, packet) && packet_callback) {
+    if (packet_callback) {
         packet_callback(packet);
     }
 }
@@ -310,10 +301,6 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
     return true; 
 }
 
-// Decode an n-byte PACK BCD field to its numeric value: two decimal digits per
-// byte, so 0x01 0x23 0x45 0x67 0x89 is 123456789. Returns false when a nibble is
-// not a decimal digit -- the cheapest available evidence that the body is not
-// aligned where we think it is, since a misread field almost always lands on one.
 // Read `length` bytes big-endian into one integer, leaving the PACK BCD nibbles
 // untouched for the application to decode.
 static uint64_t read_bcd_bytes(const std::vector<uint8_t>& raw_packet, size_t offset,
