@@ -90,9 +90,7 @@ public:
     // Configure multicast settings
     void set_multicast(const std::string& group, const std::string& iface);
     
-    // Set allowed format codes.
-    // MANDATORY before start_loop: parse_header rejects every packet while this
-    // list is empty, so an unset filter silently yields no packets at all.
+    // Set allowed format codes
     void set_allowed_format_codes(const std::vector<uint8_t>& codes);
 
     // Decode one framed record (ESC .. 0x0D 0x0A) without touching a socket,

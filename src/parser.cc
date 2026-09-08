@@ -198,7 +198,6 @@ void Parser::set_allowed_format_codes(const std::vector<uint8_t>& codes) {
     log_message(ss.str());
 }
 
-// Parse the received packet
 // Decode one framed record. Split out of parse_packet so the decoding path can
 // be exercised without a socket: start_loop() is otherwise the only way in, and
 // a unit test cannot bind a multicast group.
@@ -275,8 +274,10 @@ bool Parser::decode_packet(const std::vector<uint8_t>& raw_packet, Packet& packe
     return true;
 }
 
+// Parse the received packet
 void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
     Packet packet{};
+    // If all checks pass, invoke the callback
     if (decode_packet(raw_packet, packet) && packet_callback) {
         packet_callback(packet);
     }
