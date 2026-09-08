@@ -41,24 +41,11 @@ struct Packet {
     std::vector<uint32_t> prices; // Prices (each 5 bytes, PACK BCD)
     std::vector<uint32_t> quantities; // Quantities (each 4 bytes, PACK BCD)
 
-    // BODY for format code 0x01 (per-symbol reference data).
-    // The only message carrying the day's reference price and the two limits
-    // derived from it. Broadcast on the same multicast line as format 0x06,
-    // every minute from ~07:40 to ~08:50 for every listed symbol, then every
-    // 5 minutes for new listings only.
-    //
-    // PACK BCD exactly as it arrives, five bytes per price. The field is
-    // 9(5)V9(4), so a decoded value carries four implied decimals. Decoding is
-    // the application's job, as it is for the prices above; all five bytes are
-    // kept here, where those drop their leading one.
-    uint64_t reference_price;
-    uint64_t limit_up_price;
-    uint64_t limit_down_price;
-    // Symbol count note: "AL" marks the last record of a pre-open cycle
-    // (stock_code then holds the total symbol count rather than a symbol), "NE"
-    // the last of an intraday new-listing cycle, spaces otherwise. "AL" is how a
-    // consumer knows it has received a complete snapshot.
-    char symbol_count_note[2];
+    // BODY for format code 0x01
+    uint64_t reference_price;     // 5 bytes, PACK BCD
+    uint64_t limit_up_price;      // 5 bytes, PACK BCD
+    uint64_t limit_down_price;    // 5 bytes, PACK BCD
+    char symbol_count_note[2];    // 2 bytes, ASCII; "AL"/"NE" end a cycle
 
     // BODY for format code 0x14
     char warrant_brief_name[16]; // A. warrant brief name

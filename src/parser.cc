@@ -312,32 +312,17 @@ static uint64_t read_bcd_bytes(const std::vector<uint8_t>& raw_packet, size_t of
     return value;
 }
 
-// Parse the body for format code 0x01 (per-symbol reference data).
-//
-// Fixed 114-byte message carrying the day's reference, limit-up and limit-down
-// prices -- the only message that does. Offsets below are relative to `offset`,
-// which parse_header leaves pointing at the stock code (spec byte 11; spec bytes
-// are 1-based and byte 1 is the ESC code). TPEx puts every price one byte later
-// than TWSE because it carries an extra category-note field; business_type tells
-// the two apart.
-//
-//                                  TWSE (business type 01)  TPEx (02)
-//   reference price 9(5)V9(4) 5B       spec 41-45           spec 42-46
-//   limit-up price            5B       spec 46-50           spec 47-51
-//   limit-down price          5B       spec 51-55           spec 52-56
-//
-// No message-length or version equality check: the bounds check below plus the
-// caller's checksum already reject a misparse, and pinning the version would
-// reject a future revision with a compatible prefix.
+// Parse the body for format code 0x01
 bool Parser::parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
+    // TPEx carries an extra category note ahead of the prices, so they sit one
+    // byte later than on TWSE.
     const bool is_otc = (packet.business_type == 0x02);
     const size_t price_base = offset + (is_otc ? 31 : 30);
     const size_t body_end = price_base + 15; // three consecutive 5-byte prices
     if (body_end > raw_packet.size()) return false;
 
-    std::memcpy(packet.stock_code, &raw_packet[offset], 6);
-    // The symbol count note is at spec 37-38, i.e. 26 bytes past the stock code.
-    std::memcpy(packet.symbol_count_note, &raw_packet[offset + 26], 2);
+    std::memcpy(packet.stock_code, &raw_packet[offset], 6);              // spec 11-16
+    std::memcpy(packet.symbol_count_note, &raw_packet[offset + 26], 2);  // spec 37-38
 
     packet.reference_price  = read_bcd_bytes(raw_packet, price_base,      5);
     packet.limit_up_price   = read_bcd_bytes(raw_packet, price_base +  5, 5);
