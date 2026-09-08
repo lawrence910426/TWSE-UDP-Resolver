@@ -327,20 +327,21 @@ static bool decode_pack_bcd(const std::vector<uint8_t>& raw_packet, size_t offse
     return true;
 }
 
-// Parse the body for format code 0x01 (個股基本資料).
+// Parse the body for format code 0x01 (per-symbol reference data).
 //
-// Fixed 114-byte message carrying the day's 參考價/漲停價/跌停價 -- the only
-// message that does. Offsets below are relative to `offset`, which parse_header
-// leaves pointing at 股票代號 (spec byte 11; spec bytes are 1-based and byte 1 is
-// the ESC code). TPEx puts every price one byte later than TWSE because it
-// carries an extra 類股註記 field; business_type tells the two apart.
+// Fixed 114-byte message carrying the day's reference, limit-up and limit-down
+// prices -- the only message that does. Offsets below are relative to `offset`,
+// which parse_header leaves pointing at the stock code (spec byte 11; spec bytes
+// are 1-based and byte 1 is the ESC code). TPEx puts every price one byte later
+// than TWSE because it carries an extra category-note field; business_type tells
+// the two apart.
 //
-//                            TWSE (業務別 01)   TPEx (業務別 02)
-//   今日參考價 9(5)V9(4) 5B      spec 41-45        spec 42-46
-//   漲停價              5B      spec 46-50        spec 47-51
-//   跌停價              5B      spec 51-55        spec 52-56
+//                                  TWSE (business type 01)  TPEx (02)
+//   reference price 9(5)V9(4) 5B       spec 41-45           spec 42-46
+//   limit-up price            5B       spec 46-50           spec 47-51
+//   limit-down price          5B       spec 51-55           spec 52-56
 //
-// No 訊息長度 or 版別 equality check: the bounds check below plus BCD nibble
+// No message-length or version equality check: the bounds check below plus BCD nibble
 // validation plus the caller's checksum already reject a misparse, and pinning
 // the version would reject a future revision with a compatible prefix.
 bool Parser::parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
@@ -350,7 +351,7 @@ bool Parser::parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packe
     if (body_end > raw_packet.size()) return false;
 
     std::memcpy(packet.stock_code, &raw_packet[offset], 6);
-    // 股票筆數註記 is at spec 37-38, i.e. 26 bytes past 股票代號.
+    // The symbol count note is at spec 37-38, i.e. 26 bytes past the stock code.
     std::memcpy(packet.symbol_count_note, &raw_packet[offset + 26], 2);
 
     // Deliberately NOT the raw-BCD-bytes convention that the format 0x06 prices

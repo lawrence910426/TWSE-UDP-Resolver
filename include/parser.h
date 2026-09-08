@@ -41,7 +41,7 @@ struct Packet {
     std::vector<uint32_t> prices; // Prices (each 5 bytes, PACK BCD)
     std::vector<uint32_t> quantities; // Quantities (each 4 bytes, PACK BCD)
 
-    // BODY for format code 0x01 (個股基本資料 / per-symbol reference data).
+    // BODY for format code 0x01 (per-symbol reference data).
     // The only message carrying the day's price limits. Broadcast on the same
     // multicast line as format 0x06, every minute from ~07:40 to ~08:50 for
     // every listed symbol, then every 5 minutes for new listings only.
@@ -49,13 +49,13 @@ struct Packet {
     // Unit is 1/10000 NTD, straight from the 9(5)V9(4) PACK BCD field: all five
     // bytes are decoded, unlike the format 0x06 prices below, which drop their
     // leading byte and so cannot represent anything at or above 10,000.
-    uint64_t reference_price;    // 今日參考價
-    uint64_t limit_up_price;     // 漲停價
-    uint64_t limit_down_price;   // 跌停價
-    // 股票筆數註記: "AL" marks the last record of a pre-open cycle (stock_code
-    // then holds the total symbol count rather than a symbol), "NE" the last of
-    // an intraday new-listing cycle, spaces otherwise. "AL" is how a consumer
-    // knows it has received a complete snapshot.
+    uint64_t reference_price;    // today's reference price
+    uint64_t limit_up_price;     // limit-up price
+    uint64_t limit_down_price;   // limit-down price
+    // Symbol count note: "AL" marks the last record of a pre-open cycle
+    // (stock_code then holds the total symbol count rather than a symbol), "NE"
+    // the last of an intraday new-listing cycle, spaces otherwise. "AL" is how a
+    // consumer knows it has received a complete snapshot.
     char symbol_count_note[2];
 
     // BODY for format code 0x14
