@@ -47,9 +47,10 @@ struct Packet {
     // every minute from ~07:40 to ~08:50 for every listed symbol, then every
     // 5 minutes for new listings only.
     //
-    // Unit is 1/10000 NTD, straight from the 9(5)V9(4) PACK BCD field: all five
-    // bytes are decoded, unlike the format 0x06 prices below, which drop their
-    // leading byte and so cannot represent anything at or above 10,000.
+    // PACK BCD exactly as it arrives, five bytes per price. The field is
+    // 9(5)V9(4), so a decoded value carries four implied decimals. Decoding is
+    // the application's job, as it is for the prices above; all five bytes are
+    // kept here, where those drop their leading one.
     uint64_t reference_price;
     uint64_t limit_up_price;
     uint64_t limit_down_price;

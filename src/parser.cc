@@ -314,18 +314,15 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
 // byte, so 0x01 0x23 0x45 0x67 0x89 is 123456789. Returns false when a nibble is
 // not a decimal digit -- the cheapest available evidence that the body is not
 // aligned where we think it is, since a misread field almost always lands on one.
-static bool decode_pack_bcd(const std::vector<uint8_t>& raw_packet, size_t offset,
-                            size_t length, uint64_t& out) {
+// Read `length` bytes big-endian into one integer, leaving the PACK BCD nibbles
+// untouched for the application to decode.
+static uint64_t read_bcd_bytes(const std::vector<uint8_t>& raw_packet, size_t offset,
+                               size_t length) {
     uint64_t value = 0;
     for (size_t i = 0; i < length; ++i) {
-        const uint8_t byte = raw_packet[offset + i];
-        const uint8_t hi = byte >> 4;
-        const uint8_t lo = byte & 0x0F;
-        if (hi > 9 || lo > 9) return false;
-        value = value * 100 + hi * 10 + lo;
+        value = (value << 8) | raw_packet[offset + i];
     }
-    out = value;
-    return true;
+    return value;
 }
 
 // Parse the body for format code 0x01 (per-symbol reference data).
@@ -342,9 +339,9 @@ static bool decode_pack_bcd(const std::vector<uint8_t>& raw_packet, size_t offse
 //   limit-up price            5B       spec 46-50           spec 47-51
 //   limit-down price          5B       spec 51-55           spec 52-56
 //
-// No message-length or version equality check: the bounds check below plus BCD nibble
-// validation plus the caller's checksum already reject a misparse, and pinning
-// the version would reject a future revision with a compatible prefix.
+// No message-length or version equality check: the bounds check below plus the
+// caller's checksum already reject a misparse, and pinning the version would
+// reject a future revision with a compatible prefix.
 bool Parser::parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
     const bool is_otc = (packet.business_type == 0x02);
     const size_t price_base = offset + (is_otc ? 31 : 30);
@@ -355,16 +352,9 @@ bool Parser::parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packe
     // The symbol count note is at spec 37-38, i.e. 26 bytes past the stock code.
     std::memcpy(packet.symbol_count_note, &raw_packet[offset + 26], 2);
 
-    // Deliberately NOT the raw-BCD-bytes convention that the format 0x06 prices
-    // below use: these three are decoded to their numeric value here, because
-    // 9(5)V9(4) pins the scale at 4 decimals with no ambiguity. The decoded
-    // integer therefore IS the price in 1/10000 NTD, and a field named
-    // limit_up_price cannot be mistaken for undecoded bytes.
-    if (!decode_pack_bcd(raw_packet, price_base,      5, packet.reference_price) ||
-        !decode_pack_bcd(raw_packet, price_base +  5, 5, packet.limit_up_price) ||
-        !decode_pack_bcd(raw_packet, price_base + 10, 5, packet.limit_down_price)) {
-        return false;
-    }
+    packet.reference_price  = read_bcd_bytes(raw_packet, price_base,      5);
+    packet.limit_up_price   = read_bcd_bytes(raw_packet, price_base +  5, 5);
+    packet.limit_down_price = read_bcd_bytes(raw_packet, price_base + 10, 5);
 
     offset = body_end;
     return true;
