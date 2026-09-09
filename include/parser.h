@@ -41,6 +41,12 @@ struct Packet {
     std::vector<uint32_t> prices; // Prices (each 5 bytes, PACK BCD)
     std::vector<uint32_t> quantities; // Quantities (each 4 bytes, PACK BCD)
 
+    // BODY for format code 0x01
+    uint64_t reference_price;     // 5 bytes, PACK BCD
+    uint64_t limit_up_price;      // 5 bytes, PACK BCD
+    uint64_t limit_down_price;    // 5 bytes, PACK BCD
+    char symbol_count_note[2];    // 2 bytes, ASCII; "AL"/"NE" end a cycle
+
     // BODY for format code 0x14
     char warrant_brief_name[16]; // A. warrant brief name
     char separator[2];           // separator
@@ -91,6 +97,8 @@ private:
 
     // Helper methods for parsing
     bool parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
+    // BODY for format code 0x01
+    bool parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     // BODY for format code 0x06, 0x17
     bool parse_body_06(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset);
     // BODY for format code 0x14

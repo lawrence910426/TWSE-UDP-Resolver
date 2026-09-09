@@ -225,7 +225,12 @@ void Parser::parse_packet(const std::vector<uint8_t>& raw_packet) {
         log_message(ss.str());
         return; // Ignore invalid packets
     }
-    if (packet.format_code == 0x06 || packet.format_code == 0x17) {
+    if (packet.format_code == 0x01) {
+        if (!parse_body_01(raw_packet, packet, offset)) {
+            log_message("Invalid body for format code 0x01");
+            return;
+        }
+    } else if (packet.format_code == 0x06 || packet.format_code == 0x17) {
         if (!parse_body_06(raw_packet, packet, offset)) {
             log_message("Invalid body for format code 0x06");
             return;
@@ -294,6 +299,37 @@ bool Parser::parse_header(const std::vector<uint8_t>& raw_packet, Packet& packet
     }
 
     return true; 
+}
+
+// Read `length` bytes big-endian into one integer, leaving the PACK BCD nibbles
+// untouched for the application to decode.
+static uint64_t read_bcd_bytes(const std::vector<uint8_t>& raw_packet, size_t offset,
+                               size_t length) {
+    uint64_t value = 0;
+    for (size_t i = 0; i < length; ++i) {
+        value = (value << 8) | raw_packet[offset + i];
+    }
+    return value;
+}
+
+// Parse the body for format code 0x01
+bool Parser::parse_body_01(const std::vector<uint8_t>& raw_packet, Packet& packet, size_t& offset) {
+    // TPEx carries an extra category note ahead of the prices, so they sit one
+    // byte later than on TWSE.
+    const bool is_otc = (packet.business_type == 0x02);
+    const size_t price_base = offset + (is_otc ? 31 : 30);
+    const size_t body_end = price_base + 15; // three consecutive 5-byte prices
+    if (body_end > raw_packet.size()) return false;
+
+    std::memcpy(packet.stock_code, &raw_packet[offset], 6);              // spec 11-16
+    std::memcpy(packet.symbol_count_note, &raw_packet[offset + 26], 2);  // spec 37-38
+
+    packet.reference_price  = read_bcd_bytes(raw_packet, price_base,      5);
+    packet.limit_up_price   = read_bcd_bytes(raw_packet, price_base +  5, 5);
+    packet.limit_down_price = read_bcd_bytes(raw_packet, price_base + 10, 5);
+
+    offset = body_end;
+    return true;
 }
 
 // Parse the body for format code 0x06, 0x17
